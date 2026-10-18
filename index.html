@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Historical Board Games - Retro Arcade Hub</title>
+<style>
+  * {
+    box-sizing: border-box;
+    user-select: none;
+  }
+  body {
+    background-color: #008080;
+    font-family: "MS Sans Serif", Tahoma, Arial, sans-serif;
+    font-size: 11px;
+    margin: 16px;
+    color: #000;
+  }
+  .window {
+    background: #c0c0c0;
+    border: 2px solid;
+    border-color: #ffffff #808080 #808080 #ffffff;
+    width: 760px;
+    margin: 0 auto;
+    padding: 2px;
+    box-shadow: 4px 4px 10px rgba(0,0,0,0.5);
+  }
+  .title-bar {
+    background: linear-gradient(90deg, #000080, #1084d0);
+    padding: 4px 8px;
+    color: white;
+    font-weight: bold;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .title-bar-buttons {
+    display: flex;
+    gap: 2px;
+  }
+  .win-btn {
+    width: 16px;
+    height: 14px;
+    background: #c0c0c0;
+    border: 1px solid;
+    border-color: #ffffff #808080 #808080 #ffffff;
+    font-size: 9px;
+    line-height: 10px;
+    text-align: center;
+    font-weight: bold;
+    color: #000;
+  }
+  .content-area {
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .group-box {
+    border: 2px solid;
+    border-color: #ffffff #808080 #808080 #ffffff;
+    padding: 10px;
+    background: #c0c0c0;
+  }
+  .group-box legend {
+    font-weight: bold;
+    color: #000080;
+    padding: 0 4px;
+  }
+  .intro-text {
+    font-size: 11px;
+    line-height: 1.4;
+    margin-bottom: 8px;
+  }
+  .games-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  .game-card {
+    background: #fff;
+    border: 2px solid;
+    border-color: #808080 #ffffff #ffffff #808080;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  .game-title {
+    font-weight: bold;
+    color: #000080;
+    font-size: 12px;
+    border-bottom: 1px solid #c0c0c0;
+    padding-bottom: 3px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .game-desc {
+    font-size: 10px;
+    line-height: 1.35;
+    color: #333;
+  }
+  .launch-btn {
+    font-family: "MS Sans Serif", Tahoma, sans-serif;
+    font-size: 11px;
+    font-weight: bold;
+    background: #c0c0c0;
+    border: 2px solid;
+    border-color: #ffffff #808080 #808080 #ffffff;
+    padding: 4px 10px;
+    text-align: center;
+    text-decoration: none;
+    color: #000;
+    display: inline-block;
+    cursor: pointer;
+    align-self: flex-start;
+  }
+  .launch-btn:active {
+    border-color: #808080 #ffffff #ffffff #808080;
+  }
+  .status-bar {
+    border: 2px solid;
+    border-color: #808080 #ffffff #ffffff #808080;
+    background: #c0c0c0;
+    padding: 5px;
+    font-weight: bold;
+    color: #000080;
+  }
+</style>
+</head>
+<body>
+
+<div class="window">
+  <div class="title-bar">
+    <span>Historical & Ancient Board Games Arcade - GitHub Repository Hub</span>
+    <div class="title-bar-buttons">
+      <div class="win-btn">_</div>
+      <div class="win-btn">&#9633;</div>
+      <div class="win-btn">X</div>
+    </div>
+  </div>
+  
+  <div class="content-area">
+    <!-- Welcome Panel -->
+    <fieldset class="group-box">
+      <legend>Welcome</legend>
+      <div class="intro-text">
+        Welcome to the retro arcade repository featuring accurate digital reconstructions of classic strategic board games. Featuring single-file implementations complete with Web Audio API sound synthesizers, local 2-player modes, and smart AI opponents. Choose a game below to begin play:
+      </div>
+    </fieldset>
+
+    <!-- Games Selection Grid -->
+    <fieldset class="group-box">
+      <legend>Game Library</legend>
+      <div class="games-grid">
+        
+        <!-- Alquerque -->
+        <div class="game-card">
+          <div>
+            <div class="game-title"><span>Alquerque</span> <span style="font-size:9px; color:#666;">1283 AD</span></div>
+            <div class="game-desc">The ancient predecessor to checkers. Features a 5x5 grid with diagonal lines, mandatory jumping captures, and multi-jump chains.</div>
+          </div>
+          <a class="launch-btn" href="Alquerque.html">Launch Game &gt;</a>
+        </div>
+
+        <!-- Catch the Hare -->
+        <div class="game-card">
+          <div>
+            <div class="game-title"><span>Catch the Hare</span> <span style="font-size:9px; color:#666;">Cercar la Liebre</span></div>
+            <div class="game-desc">An asymmetric hunt game from King Alfonso X's <i>Libro de los Juegos</i>. Play as the nimble Hare or coordinate 12 Hounds to trap it.</div>
+          </div>
+          <a class="launch-btn" href="Catch the Hare.html">Launch Game &gt;</a>
+        </div>
+
+        <!-- Ludus Latrunculorum -->
+        <div class="game-card">
+          <div>
+            <div class="game-title"><span>Ludus Latrunculorum</span> <span style="font-size:9px; color:#666;">Roman Mercenaries</span></div>
+            <div class="game-desc">Tactical Roman war game played on an 8x8 grid. Utilizes rook-like sliding movement, custodian sandwich captures, and mutual protection rules.</div>
+          </div>
+          <a class="launch-btn" href="Ludus Latrunculorum.html">Launch Game &gt;</a>
+        </div>
+
+        <!-- Nine Men's Morris -->
+        <div class="game-card">
+          <div>
+            <div class="game-title"><span>Nine Men's Morris</span> <span style="font-size:9px; color:#666;">Classic Strategy</span></div>
+            <div class="game-desc">Classic three-phase positioning strategy. Form 3-in-a-row "mills" to remove opponent pieces, down to an endgame flying phase.</div>
+          </div>
+          <a class="launch-btn" href="Nine Mens Morris.html">Launch Game &gt;</a>
+        </div>
+
+        <!-- Rota -->
+        <div class="game-card" style="grid-column: span 2;">
+          <div>
+            <div class="game-title"><span>Rota</span> <span style="font-size:9px; color:#666;">Roman Wheel Game</span></div>
+            <div class="game-desc">A swift Roman alignment game played on a wheel board with 8 rim nodes and a center hub. Place 3 pieces and slide along spokes to align 3-in-a-row.</div>
+          </div>
+          <a class="launch-btn" href="Rota.html">Launch Game &gt;</a>
+        </div>
+
+      </div>
+    </fieldset>
+
+    <!-- Status Bar -->
+    <div class="status-bar">
+      Repository Status: Online | Ready for GitHub Pages Deployment
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
