@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Catch the Hare (Cercar la Liebre)</title>
+<style>
+  * {
+    box-sizing: border-box;
+    user-select: none;
+  }
+  body {
+    background-color: #008080;
+    font-family: "MS Sans Serif", Tahoma, Arial, sans-serif;
+    font-size: 11px;
+    margin: 12px;
+    color: #000;
+  }
+  .window {
+    background: #c0c0c0;
+    border: 2px solid;
+    border-color: #ffffff #808080 #808080 #ffffff;
+    width: 720px;
+    margin: 0 auto;
+    padding: 2px;
+    box-shadow: 3px 3px 6px rgba(0,0,0,0.4);
+  }
+  .title-bar {
+    background: linear-gradient(90deg, #000080, #1084d0);
+    padding: 3px 6px;
+    color: white;
+    font-weight: bold;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .title-bar-buttons {
+    display: flex;
+    gap: 2px;
+  }
+  .win-btn {
+    width: 16px;
+    height: 14px;
+    background: #c0c0c0;
+    border: 1px solid;
+    border-color: #ffffff #808080 #808080 #ffffff;
+    font-size: 9px;
+    line-height: 10px;
+    text-align: center;
+    font-weight: bold;
+    color: #000;
+  }
+  .content-area {
+    padding: 8px;
+    display: flex;
+    gap: 10px;
+  }
+  .canvas-panel {
+    border: 2px solid;
+    border-color: #808080 #ffffff #ffffff #808080;
+    background: #fff;
+    padding: 2px;
+  }
+  .control-panel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .group-box {
+    border: 2px solid;
+    border-color: #ffffff #808080 #808080 #ffffff;
+    padding: 6px;
+    background: #c0c0c0;
+  }
+  .group-box legend {
+    font-weight: bold;
+    color: #000080;
+    padding: 0 4px;
+  }
+  .field-row {
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  label {
+    font-weight: bold;
+  }
+  select, button {
+    font-family: "MS Sans Serif", Tahoma, sans-serif;
+    font-size: 11px;
+    background: #c0c0c0;
+    border: 2px solid;
+    border-color: #ffffff #808080 #808080 #ffffff;
+    padding: 3px 8px;
+    cursor: pointer;
+  }
+  button:active {
+    border-color: #808080 #ffffff #ffffff #808080;
+  }
+  .status-bar {
+    border: 2px solid;
+    border-color: #808080 #ffffff #ffffff #808080;
+    background: #c0c0c0;
+    padding: 4px;
+    font-weight: bold;
+    color: #000080;
+    min-height: 26px;
+  }
+  .rules-text {
+    font-size: 10px;
+    line-height: 1.35;
+    height: 140px;
+    overflow-y: scroll;
+    background: #fff;
+    border: 2px solid;
+    border-color: #808080 #ffffff #ffffff #808080;
+    padding: 6px;
+  }
+  .info-table {
+    width: 100%;
+    font-size: 11px;
+    border-collapse: collapse;
+  }
+  .info-table td {
+    padding: 2px 0;
+  }
+  .count-badge {
+    font-weight: bold;
+    color: #000;
+  }
+</style>
+</head>
+<body>
+
+<div class="window">
+  <div class="title-bar">
+    <span>Catch the Hare (Cercar la Liebre) - 1283 AD - As seen in Alfonso X’s Libro de los Juegos</span>
+    <div class="title-bar-buttons">
+      <div class="win-btn">_</div>
+      <div class="win-btn">&#9633;</div>
+      <div class="win-btn">X</div>
+    </div>
+  </div>
+  
+  <div class="content-area">
+    <div class="canvas-panel">
+      <canvas id="gameCanvas" width="440" height="440"></canvas>
+    </div>
+
+    <div class="control-panel">
+      <fieldset class="group-box">
+        <legend>Game Setup</legend>
+        <div class="field-row">
+          <label for="modeSelect">Opponent:</label>
+          <select id="modeSelect">
+            <option value="ai">vs Computer (AI)</option>
+            <option value="human">vs Human (Local)</option>
+          </select>
+        </div>
+        <div class="field-row">
+          <label for="roleSelect">Play As:</label>
+          <select id="roleSelect">
+            <option value="hare">Hare (1 Piece - Single Click Move)</option>
+            <option value="hounds">Hounds (12 Pieces - Trap Hare)</option>
+          </select>
+        </div>
+        <button id="restartBtn" style="width: 100%; margin-top: 4px;">Start New Game</button>
+      </fieldset>
+
+      <fieldset class="group-box">
+        <legend>Game Status</legend>
+        <table class="info-table">
+          <tr>
+            <td><b>Hounds Left:</b></td>
+            <td><span id="houndCount" class="count-badge">12</span></td>
+          </tr>
+          <tr>
+            <td><b>Active Turn:</b></td>
+            <td><span id="turnIndicator" class="count-badge">Hare</span></td>
+          </tr>
+        </table>
+      </fieldset>
+
+      <fieldset class="group-box">
+        <legend>Official Rules (Libro de los Juegos)</legend>
+        <div class="rules-text">
+          <b>Board Geometry:</b> Traditional 5x5 Alquerque matrix with corner-to-corner main diagonals and an inner midpoint diamond.<br><br>
+          <b>Setup:</b> 12 Hounds occupy Rows 0 & 1, plus the outer edges of Row 2. The Hare starts in the exact center.<br><br>
+          <b>Hare Victory:</b> Reduce the Hounds to 9 or fewer pieces (capturing at least 3 Hounds). At 9 or fewer Hounds, trapping the Hare is mathematically impossible.<br><br>
+          <b>Hounds Victory:</b> Block all valid moves and jumps of the Hare to trap and immobilize it.<br><br>
+          <b>Movement:</b> Pieces move along grid connections. The Hare moves 1 step or jumps over adjacent Hounds to empty nodes in a straight line.<br><br>
+          <b>Controls:</b> When playing as the Hare, click any valid destination node to move instantly without selecting the piece first.
+        </div>
+      </fieldset>
+
+      <div class="status-bar" id="statusText">Turn: Hare (Ready)</div>
+    </div>
+  </div>
+</div>
+
+<script>
+// Web Audio API Sound Synth
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+function playSound(type) {
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
+  const now = audioCtx.currentTime;
+
+  if (type === 'move') {
+    osc.frequency.setValueAtTime(300, now);
+    osc.frequency.exponentialRampToValueAtTime(150, now + 0.08);
+    gain.gain.setValueAtTime(0.15, now);
+    gain.gain.linearRampToValueAtTime(0, now + 0.08);
+    osc.start(now); osc.stop(now + 0.08);
+  } else if (type === 'jump') {
+    osc.frequency.setValueAtTime(550, now);
+    osc.frequency.exponentialRampToValueAtTime(250, now + 0.12);
+    gain.gain.setValueAtTime(0.2, now);
+    gain.gain.linearRampToValueAtTime(0, now + 0.12);
+    osc.start(now); osc.stop(now + 0.12);
+  } else if (type === 'win') {
+    osc.frequency.setValueAtTime(440, now);
+    osc.frequency.setValueAtTime(554.37, now + 0.12);
+    osc.frequency.setValueAtTime(659.25, now + 0.24);
+    gain.gain.setValueAtTime(0.25, now);
+    gain.gain.linearRampToValueAtTime(0, now + 0.35);
+    osc.start(now); osc.stop(now + 0.35);
+  }
+}
+
+// Canvas & Geometry Engine
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+const margin = 50;
+const step = 85;
+
+const gridPoints = [];
+for (let r = 0; r < 5; r++) {
+  for (let c = 0; c < 5; c++) {
+    gridPoints.push({ x: c, y: r, px: margin + c * step, py: margin + r * step });
+  }
+}
+
+// Full 1283 Alquerque Adjacency Table (Orthogonal + Main Diagonals + Inner Diamond)
+function getNeighbors(x, y) {
+  const neighbors = [];
+  const add = (nx, ny) => {
+    if (nx >= 0 && nx < 5 && ny >= 0 && ny < 5) {
+      neighbors.push({ x: nx, y: ny, dx: nx - x, dy: ny - y });
+    }
+  };
+
+  // Orthogonal neighbors for all nodes
+  add(x + 1, y); add(x - 1, y);
+  add(x, y + 1); add(x, y - 1);
+
+  // Main Diagonals
+  if (x === y) { add(x + 1, y + 1); add(x - 1, y - 1); }
+  if (x + y === 4) { add(x + 1, y - 1); add(x - 1, y + 1); }
+
+  // Inner Diamond Connections
+  if ((x === 2 && y === 0) || (x === 4 && y === 2)) { add(3, 1); add(x === 2 ? 1 : 3, y === 0 ? 1 : 3); }
+  if ((x === 2 && y === 4) || (x === 0 && y === 2)) { add(1, 3); add(x === 2 ? 3 : 1, y === 4 ? 3 : 1); }
+  if (x === 1 && y === 1) { add(2, 0); add(0, 2); }
+  if (x === 3 && y === 1) { add(2, 0); add(4, 2); }
+  if (x === 1 && y === 3) { add(0, 2); add(2, 4); }
+  if (x === 3 && y === 3) { add(4, 2); add(2, 4); }
+
+  // Deduplicate
+  const unique = [];
+  neighbors.forEach(n => {
+    if (!unique.some(u => u.x === n.x && u.y === n.y)) unique.push(n);
+  });
+  return unique;
+}
+
+let board = Array(25).fill(null);
+let turn = 'hare'; // 'hare' or 'hounds'
+let playerRole = 'hare';
+let gameMode = 'ai';
+let selectedIdx = null;
+let gameOver = false;
+
+function initGame() {
+  board = Array(25).fill(null);
+  
+  // Historical 1283 Libro de los Juegos Setup:
+  // Hounds: Rows 0 & 1 (10 pieces) + outer edges of Row 2 (x=0, y=2 and x=4, y=2)
+  for (let c = 0; c < 5; c++) {
+    board[0 * 5 + c] = 'hound';
+    board[1 * 5 + c] = 'hound';
+  }
+  board[2 * 5 + 0] = 'hound';
+  board[2 * 5 + 4] = 'hound';
+
+  // Hare: Exact center (x=2, y=2)
+  board[2 * 5 + 2] = 'hare';
+
+  turn = 'hare';
+  gameOver = false;
+  selectedIdx = null;
+  playerRole = document.getElementById('roleSelect').value;
+  gameMode = document.getElementById('modeSelect').value;
+
+  updateUI();
+  draw();
+  checkAITurn();
+}
+
+function updateUI(msg) {
+  const houndCount = board.filter(p => p === 'hound').length;
+  document.getElementById('houndCount').innerText = houndCount;
+  document.getElementById('turnIndicator').innerText = turn === 'hare' ? 'Hare' : 'Hounds';
+
+  const status = document.getElementById('statusText');
+  if (msg) { status.innerText = msg; return; }
+
+  let aiNotice = (gameMode === 'ai' && turn !== playerRole) ? " (AI Thinking...)" : "";
+  status.innerText = `Turn: ${turn.toUpperCase()}${aiNotice}`;
+}
+
+function draw() {
+  ctx.fillStyle = '#edd1a0';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  ctx.strokeStyle = '#3a200d';
+  ctx.lineWidth = 2;
+
+  // 1. Orthogonal Grid (5 Horizontal + 5 Vertical Lines)
+  for (let i = 0; i < 5; i++) {
+    ctx.beginPath();
+    ctx.moveTo(margin, margin + i * step);
+    ctx.lineTo(margin + 4 * step, margin + i * step);
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(margin + i * step, margin);
+    ctx.lineTo(margin + i * step, margin + 4 * step);
+    ctx.stroke();
+  }
+
+  // 2. Main Corner-to-Corner Diagonals
+  ctx.beginPath();
+  ctx.moveTo(margin, margin);
+  ctx.lineTo(margin + 4 * step, margin + 4 * step);
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.moveTo(margin + 4 * step, margin);
+  ctx.lineTo(margin, margin + 4 * step);
+  ctx.stroke();
+
+  // 3. Inner Diamond (Connecting Midpoints of Outer Edges)
+  const midTop = { x: margin + 2 * step, y: margin };
+  const midRight = { x: margin + 4 * step, y: margin + 2 * step };
+  const midBottom = { x: margin + 2 * step, y: margin + 4 * step };
+  const midLeft = { x: margin, y: margin + 2 * step };
+
+  ctx.beginPath();
+  ctx.moveTo(midTop.x, midTop.y);
+  ctx.lineTo(midRight.x, midRight.y);
+  ctx.lineTo(midBottom.x, midBottom.y);
+  ctx.lineTo(midLeft.x, midLeft.y);
+  ctx.closePath();
+  ctx.stroke();
+
+  // Draw Nodes & Pieces
+  gridPoints.forEach((pt, idx) => {
+    ctx.beginPath();
+    ctx.arc(pt.px, pt.py, 5, 0, Math.PI * 2);
+    ctx.fillStyle = '#5c3a21';
+    ctx.fill();
+
+    const val = board[idx];
+    if (val) {
+      ctx.beginPath();
+      ctx.arc(pt.px, pt.py, 18, 0, Math.PI * 2);
+      ctx.fillStyle = val === 'hare' ? '#ffffff' : '#000000';
+      ctx.fill();
+      ctx.strokeStyle = val === 'hare' ? '#000000' : '#ffffff';
+      ctx.lineWidth = 2.5;
+      ctx.stroke();
+
+      if (selectedIdx === idx) {
+        ctx.strokeStyle = '#ffff00';
+        ctx.lineWidth = 4;
+        ctx.stroke();
+      }
+    }
+  });
+}
+
+function getValidHareMoves() {
+  const hareIdx = board.indexOf('hare');
+  if (hareIdx === -1) return [];
+  const hPt = gridPoints[hareIdx];
+  const adjs = getNeighbors(hPt.x, hPt.y);
+  const moves = [];
+
+  for (let a of adjs) {
+    let targetIdx = a.y * 5 + a.x;
+    if (board[targetIdx] === null) {
+      moves.push({ from: hareIdx, to: targetIdx, jump: null });
+    } else if (board[targetIdx] === 'hound') {
+      let jx = a.x + a.dx, jy = a.y + a.dy;
+      if (jx >= 0 && jx < 5 && jy >= 0 && jy < 5) {
+        let jumpIdx = jy * 5 + jx;
+        if (board[jumpIdx] === null) {
+          moves.push({ from: hareIdx, to: jumpIdx, jump: targetIdx });
+        }
+      }
+    }
+  }
+  return moves;
+}
+
+function getValidHoundMoves(houndIdx) {
+  const pt = gridPoints[houndIdx];
+  const adjs = getNeighbors(pt.x, pt.y);
+  const moves = [];
+  for (let a of adjs) {
+    let targetIdx = a.y * 5 + a.x;
+    if (board[targetIdx] === null) {
+      moves.push({ from: houndIdx, to: targetIdx });
+    }
+  }
+  return moves;
+}
+
+canvas.addEventListener('click', (e) => {
+  if (gameOver) return;
+  if (gameMode === 'ai' && turn !== playerRole) return;
+
+  const rect = canvas.getBoundingClientRect();
+  const mx = e.clientX - rect.left;
+  const my = e.clientY - rect.top;
+
+  let clickedIdx = -1;
+  gridPoints.forEach((pt, idx) => {
+    if (Math.hypot(pt.px - mx, pt.py - my) < 22) {
+      clickedIdx = idx;
+    }
+  });
+
+  if (clickedIdx === -1) return;
+
+  if (turn === 'hare') {
+    const hareIdx = board.indexOf('hare');
+    const validMoves = getValidHareMoves();
+    const chosenMove = validMoves.find(m => m.to === clickedIdx);
+
+    if (chosenMove) {
+      makeMove('hare', chosenMove.from, chosenMove.to, chosenMove.jump);
+    }
+  } else {
+    if (selectedIdx === null) {
+      if (board[clickedIdx] === 'hound') {
+        selectedIdx = clickedIdx;
+        draw();
+      }
+    } else {
+      if (board[clickedIdx] === 'hound') {
+        selectedIdx = clickedIdx;
+        draw();
+      } else {
+        const moves = getValidHoundMoves(selectedIdx);
+        const chosen = moves.find(m => m.to === clickedIdx);
+        if (chosen) {
+          makeMove('hound', chosen.from, chosen.to);
+        } else {
+          selectedIdx = null;
+          draw();
+        }
+      }
+    }
+  }
+});
+
+function makeMove(piece, fromIdx, toIdx, jumpIdx = null) {
+  board[fromIdx] = null;
+  board[toIdx] = piece;
+  selectedIdx = null;
+
+  if (jumpIdx !== null) {
+    board[jumpIdx] = null;
+    playSound('jump');
+  } else {
+    playSound('move');
+  }
+
+  draw();
+
+  const houndCount = board.filter(p => p === 'hound').length;
+  const hareMoves = getValidHareMoves();
+
+  if (hareMoves.length === 0) {
+    gameOver = true;
+    updateUI("HOUNDS WIN! The Hare is completely trapped.");
+    playSound('win');
+    return;
+  }
+  if (houndCount <= 9) {
+    gameOver = true;
+    updateUI("HARE WINS! Hounds reduced to 9 or fewer.");
+    playSound('win');
+    return;
+  }
+
+  turn = turn === 'hare' ? 'hounds' : 'hare';
+  updateUI();
+  checkAITurn();
+}
+
+function checkAITurn() {
+  if (gameOver || gameMode !== 'ai' || turn === playerRole) return;
+
+  setTimeout(() => {
+    if (turn === 'hare') {
+      const moves = getValidHareMoves();
+      if (moves.length > 0) {
+        let captures = moves.filter(m => m.jump !== null);
+        let choice = captures.length > 0 ? captures[Math.floor(Math.random() * captures.length)] : moves[Math.floor(Math.random() * moves.length)];
+        makeMove('hare', choice.from, choice.to, choice.jump);
+      }
+    } else {
+      let houndIndices = [];
+      board.forEach((p, idx) => { if (p === 'hound') houndIndices.push(idx); });
+
+      let allMoves = [];
+      houndIndices.forEach(hIdx => {
+        let mvs = getValidHoundMoves(hIdx);
+        mvs.forEach(m => allMoves.push(m));
+      });
+
+      if (allMoves.length > 0) {
+        const hareIdx = board.indexOf('hare');
+        const hPt = gridPoints[hareIdx];
+
+        allMoves.sort((a, b) => {
+          let ptA = gridPoints[a.to], ptB = gridPoints[b.to];
+          return Math.hypot(ptA.x - hPt.x, ptA.y - hPt.y) - Math.hypot(ptB.x - hPt.x, ptB.y - hPt.y);
+        });
+
+        let choice = allMoves[0];
+        makeMove('hound', choice.from, choice.to);
+      }
+    }
+  }, 450);
+}
+
+document.getElementById('restartBtn').addEventListener('click', initGame);
+document.getElementById('roleSelect').addEventListener('change', initGame);
+document.getElementById('modeSelect').addEventListener('change', initGame);
+
+initGame();
+</script>
+</body>
+</html>

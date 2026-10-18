@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ludus Latrunculorum</title>
+<style>
+  * {
+    box-sizing: border-box;
+    user-select: none;
+  }
+  body {
+    background-color: #008080;
+    font-family: "MS Sans Serif", Tahoma, Arial, sans-serif;
+    font-size: 11px;
+    margin: 12px;
+    color: #000;
+  }
+  .window {
+    background: #c0c0c0;
+    border: 2px solid;
+    border-color: #ffffff #808080 #808080 #ffffff;
+    width: 740px;
+    margin: 0 auto;
+    padding: 2px;
+    box-shadow: 3px 3px 6px rgba(0,0,0,0.4);
+    position: relative;
+  }
+  .title-bar {
+    background: linear-gradient(90deg, #000080, #1084d0);
+    padding: 3px 6px;
+    color: white;
+    font-weight: bold;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .title-bar-buttons {
+    display: flex;
+    gap: 2px;
+  }
+  .win-btn {
+    width: 16px;
+    height: 14px;
+    background: #c0c0c0;
+    border: 1px solid;
+    border-color: #ffffff #808080 #808080 #ffffff;
+    font-size: 9px;
+    line-height: 10px;
+    text-align: center;
+    font-weight: bold;
+    color: #000;
+    cursor: pointer;
+  }
+  .content-area {
+    padding: 8px;
+    display: flex;
+    gap: 10px;
+  }
+  .canvas-panel {
+    border: 2px solid;
+    border-color: #808080 #ffffff #ffffff #808080;
+    background: #fff;
+    padding: 2px;
+  }
+  .control-panel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .group-box {
+    border: 2px solid;
+    border-color: #ffffff #808080 #808080 #ffffff;
+    padding: 6px;
+    background: #c0c0c0;
+  }
+  .group-box legend {
+    font-weight: bold;
+    color: #000080;
+    padding: 0 4px;
+  }
+  .field-row {
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  label {
+    font-weight: bold;
+  }
+  select, button {
+    font-family: "MS Sans Serif", Tahoma, sans-serif;
+    font-size: 11px;
+    background: #c0c0c0;
+    border: 2px solid;
+    border-color: #ffffff #808080 #808080 #ffffff;
+    padding: 3px 8px;
+    cursor: pointer;
+  }
+  button:active {
+    border-color: #808080 #ffffff #ffffff #808080;
+  }
+  .status-bar {
+    border: 2px solid;
+    border-color: #808080 #ffffff #ffffff #808080;
+    background: #c0c0c0;
+    padding: 4px;
+    font-weight: bold;
+    color: #000080;
+    min-height: 26px;
+  }
+  .rules-text {
+    font-size: 10px;
+    line-height: 1.35;
+    height: 115px;
+    overflow-y: scroll;
+    background: #fff;
+    border: 2px solid;
+    border-color: #808080 #ffffff #ffffff #808080;
+    padding: 6px;
+  }
+  .info-table {
+    width: 100%;
+    font-size: 11px;
+    border-collapse: collapse;
+  }
+  .info-table td {
+    padding: 2px 0;
+  }
+  .count-badge {
+    font-weight: bold;
+    color: #000;
+  }
+  .help-btn {
+    width: 100%;
+    margin-top: 6px;
+    background: #d4d0c8;
+    font-weight: bold;
+    color: #000080;
+  }
+
+  /* Modal Overlay & Help Dialog */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.4);
+    z-index: 1000;
+    justify-content: center;
+    align-items: center;
+  }
+  .help-window {
+    background: #c0c0c0;
+    border: 2px solid;
+    border-color: #ffffff #808080 #808080 #ffffff;
+    width: 580px;
+    max-height: 85vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 4px 4px 10px rgba(0,0,0,0.5);
+  }
+  .help-body {
+    padding: 10px;
+    overflow-y: auto;
+    font-size: 11px;
+    line-height: 1.4;
+  }
+  .example-card {
+    background: #fff;
+    border: 2px solid;
+    border-color: #808080 #ffffff #ffffff #808080;
+    padding: 8px;
+    margin-bottom: 10px;
+  }
+  .example-title {
+    font-weight: bold;
+    color: #000080;
+    margin-bottom: 4px;
+    border-bottom: 1px solid #c0c0c0;
+    padding-bottom: 2px;
+  }
+  .mini-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 24px);
+    grid-template-rows: repeat(5, 24px);
+    gap: 1px;
+    background: #808080;
+    width: fit-content;
+    border: 1px solid #000;
+    margin: 6px 0;
+  }
+  .cell {
+    background: #f0d9b5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    position: relative;
+  }
+  .cell.dark { background: #b58863; }
+  .piece {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border: 1.5px solid #000;
+  }
+  .piece.w { background: #fff; }
+  .piece.b { background: #000; border-color: #fff; }
+  .arrow-dot {
+    width: 6px;
+    height: 6px;
+    background: #27ae60;
+    border-radius: 50%;
+  }
+</style>
+</head>
+<body>
+
+<div class="window">
+  <div class="title-bar">
+    <span>Ludus Latrunculorum - "The game of little soldiers" - c. 2nd century BC</span>
+    <div class="title-bar-buttons">
+      <div class="win-btn">_</div>
+      <div class="win-btn">&#9633;</div>
+      <div class="win-btn">X</div>
+    </div>
+  </div>
+  
+  <div class="content-area">
+    <div class="canvas-panel">
+      <canvas id="gameCanvas" width="440" height="440"></canvas>
+    </div>
+
+    <div class="control-panel">
+      <fieldset class="group-box">
+        <legend>Game Setup</legend>
+        <div class="field-row">
+          <label for="modeSelect">Opponent:</label>
+          <select id="modeSelect">
+            <option value="ai">vs Computer (AI)</option>
+            <option value="human">vs Human (Local)</option>
+          </select>
+        </div>
+        <div class="field-row">
+          <label for="playerColorSelect">Play As:</label>
+          <select id="playerColorSelect">
+            <option value="white">White (First Move)</option>
+            <option value="black">Black (Second Move)</option>
+          </select>
+        </div>
+        <button id="restartBtn" style="width: 100%; margin-top: 4px;">Start New Game</button>
+      </fieldset>
+
+      <fieldset class="group-box">
+        <legend>Piece Count</legend>
+        <table class="info-table">
+          <tr>
+            <td><b>White Pieces:</b></td>
+            <td>Remaining: <span id="wCount" class="count-badge">12</span></td>
+          </tr>
+          <tr>
+            <td><b>Black Pieces:</b></td>
+            <td>Remaining: <span id="bCount" class="count-badge">12</span></td>
+          </tr>
+        </table>
+      </fieldset>
+
+      <fieldset class="group-box">
+        <legend>Official Rules</legend>
+        <div class="rules-text">
+          <b>Setup:</b> Played on an 8×8 grid. Each player starts with 12 soldiers in their first two rows (full back row + middle four squares of second row).<br><br>
+          <b>Movement:</b> Pieces move like a chess rook—any number of empty squares orthogonally. <b>No jumping over other pieces!</b><br><br>
+          <b>Custodian Capture:</b> Trap an enemy piece strictly between two enemy-flanking pieces (Enemy—Victim—Enemy). Adjacent friendly pieces protect each other.
+        </div>
+        <button id="openHelpBtn" class="help-btn">? View Legal Moves & Capture Examples</button>
+      </fieldset>
+
+      <div class="status-bar" id="statusText">Turn: White</div>
+    </div>
+  </div>
+</div>
+
+<!-- RETRO HELP FILE MODAL -->
+<div class="modal-overlay" id="helpModal">
+  <div class="help-window">
+    <div class="title-bar">
+      <span>Ludus Latrunculorum Help File - Legal Moves & Tactics</span>
+      <div class="title-bar-buttons">
+        <div class="win-btn" id="closeHelpBtn">X</div>
+      </div>
+    </div>
+    <div class="help-body">
+      
+      <!-- Example 1: Movement -->
+      <div class="example-card">
+        <div class="example-title">1. Legal Movement (Rook Slide & No Jumping)</div>
+        <div>Pieces slide any number of empty squares horizontally or vertically. <b>You cannot jump over other pieces</b>—friendly or enemy pieces block your path entirely.</div>
+        <div style="display:flex; gap:15px; align-items:center;">
+          <div class="mini-grid">
+            <div class="cell"></div><div class="cell dark"></div><div class="cell"></div><div class="cell dark"></div><div class="cell"></div>
+            <div class="cell dark"></div><div class="cell"><div class="arrow-dot"></div></div><div class="cell dark"></div><div class="cell"></div><div class="cell dark"></div>
+            <div class="cell"><div class="arrow-dot"></div></div><div class="cell dark"><div class="piece w"></div></div><div class="cell dark"><div class="piece b"></div></div><div class="cell"></div><div class="cell dark"></div>
+            <div class="cell dark"></div><div class="cell"><div class="arrow-dot"></div></div><div class="cell dark"></div><div class="cell"></div><div class="cell dark"></div>
+            <div class="cell"></div><div class="cell dark"></div><div class="cell"></div><div class="cell dark"></div><div class="cell"></div>
+          </div>
+          <div style="font-size:10px; flex:1;">
+            <b>Diagram:</b> The White piece can slide freely up, down, or left along open squares. It <b>cannot</b> slide right past the Black piece because jumping or passing through pieces is illegal.
+          </div>
+        </div>
+      </div>
+
+      <!-- Example 2: Custodian Capture -->
+      <div class="example-card">
+        <div class="example-title">2. Custodian Capture (Strict Sandwiching)</div>
+        <div>An enemy piece is captured when it is bracketed on opposite flanks by enemy pieces (Enemy—Victim—Enemy). Pairs of adjacent friendly pieces mutually protect each other.</div>
+        <div style="display:flex; gap:15px; align-items:center;">
+          <div class="mini-grid">
+            <div class="cell"></div><div class="cell dark"></div><div class="cell"></div><div class="cell dark"></div><div class="cell"></div>
+            <div class="cell dark"><div class="piece w"></div></div><div class="cell"><div class="piece b"></div></div><div class="cell dark"><div class="arrow-dot"></div></div><div class="cell"></div><div class="cell dark"></div>
+            <div class="cell"></div><div class="cell dark"></div><div class="cell"><div class="piece w"></div></div><div class="cell dark"></div><div class="cell"></div>
+            <div class="cell dark"></div><div class="cell"></div><div class="cell dark"></div><div class="cell"></div><div class="cell dark"></div>
+            <div class="cell"></div><div class="cell dark"></div><div class="cell"></div><div class="cell dark"></div><div class="cell"></div>
+          </div>
+          <div style="font-size:10px; flex:1;">
+            <b>Before Move:</b> White slides down into position.<br><br>
+            <b>Result:</b> The single Black piece is flanked on opposite sides by White pieces and is captured!
+          </div>
+        </div>
+      </div>
+
+      <!-- Example 3: Safe Entry Exception -->
+      <div class="example-card">
+        <div class="example-title">3. Safe Entry Exception</div>
+        <div>If you voluntarily move your own piece <i>into</i> a gap between two enemy pieces, your piece is <b>SAFE</b> and is not captured.</div>
+        <div style="display:flex; gap:15px; align-items:center;">
+          <div class="mini-grid">
+            <div class="cell"></div><div class="cell dark"><div class="piece b"></div></div><div class="cell"></div><div class="cell dark"></div><div class="cell"></div>
+            <div class="cell dark"></div><div class="cell"><div class="piece w"></div></div><div class="cell dark"><div class="arrow-dot"></div></div><div class="cell"></div><div class="cell dark"></div>
+            <div class="cell"></div><div class="cell dark"><div class="piece b"></div></div><div class="cell"></div><div class="cell dark"></div><div class="cell"></div>
+            <div class="cell dark"></div><div class="cell"></div><div class="cell dark"></div><div class="cell"></div><div class="cell dark"></div>
+            <div class="cell"></div><div class="cell dark"></div><div class="cell"></div><div class="cell dark"></div><div class="cell"></div>
+          </div>
+          <div style="font-size:10px; flex:1;">
+            <b>Diagram:</b> The White piece starts to the left and slides <b>sideways</b> into the gap between the two Black soldiers. Because White initiated the move into the trap voluntarily, White is completely safe.
+          </div>
+        </div>
+      </div>
+
+      <!-- Example 4: Mutual Protection (FULLY CORRECTED GRAPHIC) -->
+      <div class="example-card">
+        <div class="example-title">4. Mutual Protection of Friendly Pairs</div>
+        <div>If two friendly pieces stand directly next to each other, they protect one another. Bracketing one side with a hostile piece does <b>not</b> capture them because one flank is friendly.</div>
+        <div style="display:flex; gap:15px; align-items:center;">
+          <div class="mini-grid">
+            <div class="cell"></div><div class="cell dark"></div><div class="cell"></div><div class="cell dark"></div><div class="cell"></div>
+            <div class="cell dark"><div class="piece w"></div></div><div class="cell"><div class="piece b"></div></div><div class="cell dark"><div class="piece b"></div></div><div class="cell dark"><div class="piece w"></div></div><div class="cell"></div>
+            <div class="cell"></div><div class="cell dark"></div><div class="cell"></div><div class="cell dark"></div><div class="cell"></div>
+            <div class="cell dark"></div><div class="cell"></div><div class="cell dark"></div><div class="cell"></div><div class="cell dark"></div>
+            <div class="cell"></div><div class="cell dark"></div><div class="cell"></div><div class="cell dark"></div><div class="cell"></div>
+          </div>
+          <div style="font-size:10px; flex:1;">
+            <b>Diagram:</b> Two adjacent Black pieces (`B B`) sit between a White piece on the left and a White piece on the right (`W B B W`). Neither Black piece is captured because each touches a friendly Black neighbor on one flank.
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+// Web Audio API Sound Synth
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+function playSound(type) {
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
+  const now = audioCtx.currentTime;
+
+  if (type === 'move') {
+    osc.frequency.setValueAtTime(300, now);
+    osc.frequency.exponentialRampToValueAtTime(150, now + 0.08);
+    gain.gain.setValueAtTime(0.15, now);
+    gain.gain.linearRampToValueAtTime(0, now + 0.08);
+    osc.start(now); osc.stop(now + 0.08);
+  } else if (type === 'capture') {
+    osc.frequency.setValueAtTime(600, now);
+    osc.frequency.exponentialRampToValueAtTime(120, now + 0.15);
+    gain.gain.setValueAtTime(0.25, now);
+    gain.gain.linearRampToValueAtTime(0, now + 0.15);
+    osc.start(now); osc.stop(now + 0.15);
+  } else if (type === 'win') {
+    osc.frequency.setValueAtTime(440, now);
+    osc.frequency.setValueAtTime(554.37, now + 0.12);
+    osc.frequency.setValueAtTime(659.25, now + 0.24);
+    gain.gain.setValueAtTime(0.25, now);
+    gain.gain.linearRampToValueAtTime(0, now + 0.35);
+    osc.start(now); osc.stop(now + 0.35);
+  }
+}
+
+// Canvas & Board Engine
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+const tileSize = 55;
+
+let board = Array(8).fill(null).map(() => Array(8).fill(null));
+let turn = 'white';
+let playerColor = 'white';
+let gameMode = 'ai';
+let selectedCoord = null;
+let gameOver = false;
+
+function initGame() {
+  board = Array(8).fill(null).map(() => Array(8).fill(null));
+
+  for (let c = 0; c < 8; c++) board[0][c] = 'white';
+  for (let c = 2; c < 6; c++) board[1][c] = 'white';
+
+  for (let c = 2; c < 6; c++) board[6][c] = 'black';
+  for (let c = 0; c < 8; c++) board[7][c] = 'black';
+
+  turn = 'white';
+  gameOver = false;
+  selectedCoord = null;
+  playerColor = document.getElementById('playerColorSelect').value;
+  gameMode = document.getElementById('modeSelect').value;
+
+  updateUI();
+  draw();
+  checkAITurn();
+}
+
+function updateUI(msg) {
+  let wCount = 0, bCount = 0;
+  for (let r = 0; r < 8; r++) {
+    for (let c = 0; c < 8; c++) {
+      if (board[r][c] === 'white') wCount++;
+      if (board[r][c] === 'black') bCount++;
+    }
+  }
+  document.getElementById('wCount').innerText = wCount;
+  document.getElementById('bCount').innerText = bCount;
+
+  const status = document.getElementById('statusText');
+  if (msg) { status.innerText = msg; return; }
+
+  let turnStr = turn === 'white' ? 'White' : 'Black';
+  let aiNotice = (gameMode === 'ai' && turn !== playerColor) ? " (AI Thinking...)" : "";
+  status.innerText = `Turn: ${turnStr}${aiNotice}`;
+}
+
+function draw() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  for (let r = 0; r < 8; r++) {
+    for (let c = 0; c < 8; c++) {
+      ctx.fillStyle = (r + c) % 2 === 0 ? '#f0d9b5' : '#b58863';
+      ctx.fillRect(c * tileSize, r * tileSize, tileSize, tileSize);
+
+      if (selectedCoord && selectedCoord.r === r && selectedCoord.c === c) {
+        ctx.fillStyle = 'rgba(255, 255, 0, 0.5)';
+        ctx.fillRect(c * tileSize, r * tileSize, tileSize, tileSize);
+      }
+    }
+  }
+
+  for (let r = 0; r < 8; r++) {
+    for (let c = 0; c < 8; c++) {
+      let p = board[r][c];
+      if (p) {
+        let cx = c * tileSize + tileSize / 2;
+        let cy = r * tileSize + tileSize / 2;
+        
+        ctx.beginPath();
+        ctx.arc(cx, cy, 18, 0, Math.PI * 2);
+        ctx.fillStyle = p === 'white' ? '#ffffff' : '#000000';
+        ctx.fill();
+        ctx.strokeStyle = p === 'white' ? '#000000' : '#ffffff';
+        ctx.lineWidth = 2.5;
+        ctx.stroke();
+      }
+    }
+  }
+}
+
+function getValidMoves(r, c) {
+  let moves = [];
+  let p = board[r][c];
+  if (!p) return moves;
+
+  let dirs = [[-1,0], [1,0], [0,-1], [0,1]];
+  for (let [dr, dc] of dirs) {
+    let nr = r + dr, nc = c + dc;
+    while (nr >= 0 && nr < 8 && nc >= 0 && nc < 8) {
+      if (board[nr][nc] === null) {
+        moves.push({r: nr, c: nc});
+        nr += dr;
+        nc += dc;
+      } else {
+        break;
+      }
+    }
+  }
+  return moves;
+}
+
+function checkCaptures(r, c, player) {
+  let enemy = player === 'white' ? 'black' : 'white';
+  let captured = [];
+
+  let dirs = [
+    { dr: -1, dc: 0 },
+    { dr: 1, dc: 0 },
+    { dr: 0, dc: -1 },
+    { dr: 0, dc: 1 }
+  ];
+
+  for (let d of dirs) {
+    let adjR = r + d.dr;
+    let adjC = c + d.dc;
+    let bookendR = r + d.dr * 2;
+    let bookendC = c + d.dc * 2;
+
+    if (adjR >= 0 && adjR < 8 && adjC >= 0 && adjC < 8 &&
+        bookendR >= 0 && bookendR < 8 && bookendC >= 0 && bookendC < 8) {
+      if (board[adjR][adjC] === enemy && board[bookendR][bookendC] === player) {
+        captured.push({r: adjR, c: adjC});
+      }
+    }
+  }
+  return captured;
+}
+
+canvas.addEventListener('click', (e) => {
+  if (gameOver) return;
+  if (gameMode === 'ai' && turn !== playerColor) return;
+
+  const rect = canvas.getBoundingClientRect();
+  const x = e.clientX - rect.left;
+  const y = e.clientY - rect.top;
+
+  let c = Math.floor(x / tileSize);
+  let r = Math.floor(y / tileSize);
+
+  if (r < 0 || r >= 8 || c < 0 || c >= 8) return;
+
+  handlePlayerAction(r, c);
+});
+
+function handlePlayerAction(r, c) {
+  if (selectedCoord === null) {
+    if (board[r][c] === turn) {
+      selectedCoord = {r, c};
+      draw();
+    }
+  } else {
+    if (board[r][c] === turn) {
+      selectedCoord = {r, c};
+      draw();
+    } else {
+      let valid = getValidMoves(selectedCoord.r, selectedCoord.c);
+      let target = valid.find(m => m.r === r && m.c === c);
+
+      if (target) {
+        executeMove(selectedCoord.r, selectedCoord.c, target.r, target.c);
+      } else {
+        selectedCoord = null;
+        draw();
+      }
+    }
+  }
+}
+
+function executeMove(fromR, fromC, toR, toC) {
+  let movingPiece = board[fromR][fromC];
+  board[fromR][fromC] = null;
+  board[toR][toC] = movingPiece;
+  selectedCoord = null;
+
+  playSound('move');
+
+  let captured = checkCaptures(toR, toC, movingPiece);
+  if (captured.length > 0) {
+    captured.forEach(cap => {
+      board[cap.r][cap.c] = null;
+    });
+    playSound('capture');
+  }
+
+  draw();
+
+  let enemy = movingPiece === 'white' ? 'black' : 'white';
+  let enemyCount = 0;
+  let enemyHasMoves = false;
+
+  for (let r = 0; r < 8; r++) {
+    for (let c = 0; c < 8; c++) {
+      if (board[r][c] === enemy) {
+        enemyCount++;
+        if (getValidMoves(r, c).length > 0) enemyHasMoves = true;
+      }
+    }
+  }
+
+  if (enemyCount === 0 || !enemyHasMoves) {
+    gameOver = true;
+    let winner = movingPiece === 'white' ? 'WHITE' : 'BLACK';
+    updateUI(`${winner} WINS! ${enemyCount === 0 ? 'All enemy pieces captured.' : 'Enemy blocked with no legal moves.'}`);
+    playSound('win');
+    return;
+  }
+
+  turn = enemy;
+  updateUI();
+  checkAITurn();
+}
+
+function checkAITurn() {
+  if (gameOver || gameMode !== 'ai' || turn === playerColor) return;
+
+  setTimeout(() => {
+    let aiPieces = [];
+    for (let r = 0; r < 8; r++) {
+      for (let c = 0; c < 8; c++) {
+        if (board[r][c] === turn) aiPieces.push({r, c});
+      }
+    }
+
+    let allMoves = [];
+    aiPieces.forEach(p => {
+      let moves = getValidMoves(p.r, p.c);
+      moves.forEach(m => {
+        let tempBoard = board.map(row => [...row]);
+        tempBoard[p.r][p.c] = null;
+        tempBoard[m.r][m.c] = turn;
+        
+        let enemy = turn === 'white' ? 'black' : 'white';
+        let capCount = 0;
+        let dirs = [{dr:-1,dc:0},{dr:1,dc:0},{dr:0,dc:-1},{dr:0,dc:1}];
+        dirs.forEach(d => {
+          let ar = m.r + d.dr, ac = m.c + d.dc;
+          let br = m.r + d.dr * 2, bc = m.c + d.dc * 2;
+          if (ar>=0 && ar<8 && ac>=0 && ac<8 && br>=0 && br<8 && bc>=0 && bc<8) {
+            if (tempBoard[ar][ac] === enemy && tempBoard[br][bc] === turn) capCount++;
+          }
+        });
+
+        allMoves.push({ from: p, to: m, score: capCount });
+      });
+    });
+
+    if (allMoves.length > 0) {
+      allMoves.sort((a, b) => b.score - a.score);
+      let bestScore = allMoves[0].score;
+      let bestMoves = allMoves.filter(m => m.score === bestScore);
+      let choice = bestMoves[Math.floor(Math.random() * bestMoves.length)];
+
+      executeMove(choice.from.r, choice.from.c, choice.to.r, choice.to.c);
+    }
+  }, 450);
+}
+
+// Modal Handlers
+document.getElementById('openHelpBtn').addEventListener('click', () => {
+  document.getElementById('helpModal').style.display = 'flex';
+});
+document.getElementById('closeHelpBtn').addEventListener('click', () => {
+  document.getElementById('helpModal').style.display = 'none';
+});
+
+document.getElementById('restartBtn').addEventListener('click', initGame);
+document.getElementById('playerColorSelect').addEventListener('change', initGame);
+document.getElementById('modeSelect').addEventListener('change', initGame);
+
+initGame();
+</script>
+</body>
+</html>

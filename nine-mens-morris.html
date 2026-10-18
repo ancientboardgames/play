@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nine Men's Morris</title>
+<style>
+  * {
+    box-sizing: border-box;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+  body {
+    background-color: #008080;
+    font-family: "MS Sans Serif", "Microsoft Sans Serif", Tahoma, Arial, sans-serif;
+    font-size: 11px;
+    margin: 12px;
+    color: #000;
+  }
+  .window {
+    background: #c0c0c0;
+    border: 2px solid;
+    border-color: #ffffff #808080 #808080 #ffffff;
+    width: 740px;
+    margin: 0 auto;
+    padding: 2px;
+    box-shadow: 3px 3px 8px rgba(0,0,0,0.5);
+  }
+  .title-bar {
+    background: linear-gradient(90deg, #000080, #1084d0);
+    padding: 3px 6px;
+    color: white;
+    font-weight: bold;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    letter-spacing: 0.5px;
+  }
+  .title-bar-buttons {
+    display: flex;
+    gap: 2px;
+  }
+  .win-btn {
+    width: 16px;
+    height: 14px;
+    background: #c0c0c0;
+    border: 1px solid;
+    border-color: #ffffff #808080 #808080 #ffffff;
+    font-size: 9px;
+    line-height: 10px;
+    text-align: center;
+    font-weight: bold;
+    color: #000;
+  }
+  .content-area {
+    padding: 8px;
+    display: flex;
+    gap: 10px;
+  }
+  .canvas-panel {
+    border: 2px solid;
+    border-color: #808080 #ffffff #ffffff #808080;
+    background: #edd1a0;
+    padding: 4px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  #gameCanvas {
+    display: block;
+    cursor: pointer;
+    background-color: #edd1a0;
+  }
+  .control-panel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .group-box {
+    border: 2px solid;
+    border-color: #ffffff #808080 #808080 #ffffff;
+    padding: 6px;
+    background: #c0c0c0;
+    position: relative;
+  }
+  .group-box legend {
+    font-weight: bold;
+    color: #000080;
+    padding: 0 4px;
+  }
+  .field-row {
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  label {
+    font-weight: bold;
+  }
+  select, button {
+    font-family: "MS Sans Serif", "Microsoft Sans Serif", Tahoma, sans-serif;
+    font-size: 11px;
+    background: #c0c0c0;
+    border: 2px solid;
+    border-color: #ffffff #808080 #808080 #ffffff;
+    padding: 3px 8px;
+    cursor: pointer;
+  }
+  button:active {
+    border-color: #808080 #ffffff #ffffff #808080;
+  }
+  .status-bar {
+    border: 2px solid;
+    border-color: #808080 #ffffff #ffffff #808080;
+    background: #c0c0c0;
+    padding: 5px;
+    font-weight: bold;
+    color: #000080;
+    min-height: 28px;
+    display: flex;
+    align-items: center;
+  }
+  .rules-text {
+    font-size: 10px;
+    line-height: 1.35;
+    height: 150px;
+    overflow-y: scroll;
+    background: #fff;
+    border: 2px solid;
+    border-color: #808080 #ffffff #ffffff #808080;
+    padding: 6px;
+  }
+  .info-table {
+    width: 100%;
+    font-size: 11px;
+    border-collapse: collapse;
+  }
+  .info-table td {
+    padding: 2px 0;
+  }
+  .count-badge {
+    font-weight: bold;
+    color: #000;
+  }
+  .swatch {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    border: 1px solid #000;
+    vertical-align: middle;
+    margin-right: 3px;
+  }
+  .swatch-white {
+    background: #ffffff;
+  }
+  .swatch-black {
+    background: #222222;
+  }
+</style>
+</head>
+<body>
+
+<div class="window">
+  <div class="title-bar">
+    <span>Nine Men's Morris - c. 1st century AD</span>
+    <div class="title-bar-buttons">
+      <div class="win-btn">_</div>
+      <div class="win-btn">&#9633;</div>
+      <div class="win-btn">X</div>
+    </div>
+  </div>
+  
+  <div class="content-area">
+    <!-- Left Panel: Canvas Game Board -->
+    <div class="canvas-panel">
+      <canvas id="gameCanvas" width="440" height="440"></canvas>
+    </div>
+
+    <!-- Right Panel: Controls & Options -->
+    <div class="control-panel">
+      <fieldset class="group-box">
+        <legend>Game Setup</legend>
+        <div class="field-row">
+          <label for="modeSelect">Opponent:</label>
+          <select id="modeSelect">
+            <option value="ai">vs Computer (AI)</option>
+            <option value="human">vs Human (Local)</option>
+          </select>
+        </div>
+        <div class="field-row">
+          <label for="playerColorSelect">Play As:</label>
+          <select id="playerColorSelect">
+            <option value="P1">White (First Move)</option>
+            <option value="P2">Black (Second Move)</option>
+          </select>
+        </div>
+        <button id="restartBtn" style="width: 100%; margin-top: 4px;">Start New Game</button>
+      </fieldset>
+
+      <fieldset class="group-box">
+        <legend>Piece Inventory</legend>
+        <table class="info-table">
+          <tr>
+            <td><span class="swatch swatch-white"></span><b>White Pieces:</b></td>
+            <td>Unplaced: <span id="wUnplaced" class="count-badge">9</span></td>
+            <td>On Board: <span id="wBoard" class="count-badge">0</span></td>
+          </tr>
+          <tr>
+            <td><span class="swatch swatch-black"></span><b>Black Pieces:</b></td>
+            <td>Unplaced: <span id="bUnplaced" class="count-badge">9</span></td>
+            <td>On Board: <span id="bBoard" class="count-badge">0</span></td>
+          </tr>
+        </table>
+      </fieldset>
+
+      <fieldset class="group-box">
+        <legend>Official Rules</legend>
+        <div class="rules-text">
+          <b>Phase 1: Placement</b><br>
+          Players alternate placing 9 pieces onto empty intersection points on the grid.<br><br>
+          <b>Phase 2: Movement</b><br>
+          Once all 18 pieces are placed, players alternate sliding 1 piece per turn along connected grid lines to an adjacent empty node.<br><br>
+          <b>Mills & Captures</b><br>
+          Forming 3 pieces in a connected straight line forms a <i>Mill</i>. This grants immediate removal of any opponent piece <b>not</b> currently inside an active mill (unless all enemy pieces are in mills).<br><br>
+          <b>Phase 3: Flying</b><br>
+          When a player is reduced to exactly 3 pieces, their pieces can "fly" to any empty point on the board regardless of grid lines.<br><br>
+          <b>Victory Condition:</b><br>
+          Reduce the opponent to fewer than 3 pieces, or block all of their legal moves.
+        </div>
+      </fieldset>
+
+      <div class="status-bar" id="statusText">Phase 1: Place White Piece</div>
+    </div>
+  </div>
+</div>
+
+<script>
+// --- Web Audio API Synth Engine ---
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+function playSound(type) {
+  if (audioCtx.state === 'suspended') {
+    audioCtx.resume();
+  }
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
+  const now = audioCtx.currentTime;
+
+  if (type === 'place') {
+    osc.frequency.setValueAtTime(360, now);
+    osc.frequency.exponentialRampToValueAtTime(180, now + 0.08);
+    gain.gain.setValueAtTime(0.2, now);
+    gain.gain.linearRampToValueAtTime(0, now + 0.08);
+    osc.start(now); osc.stop(now + 0.08);
+  } else if (type === 'move') {
+    osc.frequency.setValueAtTime(280, now);
+    osc.frequency.exponentialRampToValueAtTime(140, now + 0.08);
+    gain.gain.setValueAtTime(0.18, now);
+    gain.gain.linearRampToValueAtTime(0, now + 0.08);
+    osc.start(now); osc.stop(now + 0.08);
+  } else if (type === 'mill') {
+    osc.frequency.setValueAtTime(523.25, now);
+    osc.frequency.setValueAtTime(659.25, now + 0.09);
+    osc.frequency.setValueAtTime(783.99, now + 0.18);
+    gain.gain.setValueAtTime(0.25, now);
+    gain.gain.linearRampToValueAtTime(0, now + 0.3);
+    osc.start(now); osc.stop(now + 0.3);
+  } else if (type === 'remove') {
+    osc.frequency.setValueAtTime(600, now);
+    osc.frequency.exponentialRampToValueAtTime(100, now + 0.14);
+    gain.gain.setValueAtTime(0.25, now);
+    gain.gain.linearRampToValueAtTime(0, now + 0.14);
+    osc.start(now); osc.stop(now + 0.14);
+  } else if (type === 'win') {
+    osc.frequency.setValueAtTime(440, now);
+    osc.frequency.setValueAtTime(554.37, now + 0.12);
+    osc.frequency.setValueAtTime(659.25, now + 0.24);
+    osc.frequency.setValueAtTime(880, now + 0.36);
+    gain.gain.setValueAtTime(0.3, now);
+    gain.gain.linearRampToValueAtTime(0, now + 0.55);
+    osc.start(now); osc.stop(now + 0.55);
+  }
+}
+
+// --- Board Geometry & Connections ---
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+
+// 24 Node Positions (x, y coordinates on 440x440 canvas)
+const nodes = [
+  {x:40, y:40},   {x:220, y:40},  {x:400, y:40},  // 0, 1, 2 (Outer N)
+  {x:100, y:100}, {x:220, y:100}, {x:340, y:100}, // 3, 4, 5 (Middle N)
+  {x:160, y:160}, {x:220, y:160}, {x:280, y:160}, // 6, 7, 8 (Inner N)
+  {x:40, y:220},  {x:100, y:220}, {x:160, y:220}, // 9, 10, 11 (Cross West)
+  {x:280, y:220}, {x:340, y:220}, {x:400, y:220}, // 12, 13, 14 (Cross East)
+  {x:160, y:280}, {x:220, y:280}, {x:280, y:280}, // 15, 16, 17 (Inner S)
+  {x:100, y:340}, {x:220, y:340}, {x:340, y:340}, // 18, 19, 20 (Middle S)
+  {x:40, y:400},  {x:220, y:400}, {x:400, y:400}  // 21, 22, 23 (Outer S)
+];
+
+// Direct adjacency connections for each node
+const adj = [
+  [1, 9],        [0, 2, 4],     [1, 14],       // 0, 1, 2
+  [4, 10],       [1, 3, 5, 7],  [4, 13],       // 3, 4, 5
+  [7, 11],       [4, 6, 8],     [7, 12],       // 6, 7, 8
+  [0, 10, 21],   [3, 9, 11, 18],[6, 10, 15],   // 9, 10, 11
+  [8, 13, 17],   [5, 12, 14, 20],[2, 13, 23],  // 12, 13, 14
+  [11, 16],      [15, 17, 19],  [12, 16],      // 15, 16, 17
+  [10, 19],      [16, 18, 20, 22],[13, 19],    // 18, 19, 20
+  [9, 22],       [21, 23, 19],  [14, 22]       // 21, 22, 23
+];
+
+// All 16 potential mills (3 connected nodes in a line)
+const mills = [
+  [0,1,2], [3,4,5], [6,7,8], [9,10,11], [12,13,14], [15,16,17], [18,19,20], [21,22,23], // Horizontals
+  [0,9,21], [3,10,18], [6,11,15], [1,4,7], [16,19,22], [8,12,17], [5,13,20], [2,14,23]  // Verticals
+];
+
+// --- Game State Variables ---
+let board = Array(24).fill(null);
+let turn = 'P1'; // 'P1' (White) or 'P2' (Black)
+let unplacedP1 = 9, unplacedP2 = 9;
+let millRemoval = false;
+let selectedIdx = null;
+let gameOver = false;
+let userColor = 'P1';
+let gameMode = 'ai';
+
+function initGame() {
+  board = Array(24).fill(null);
+  turn = 'P1';
+  unplacedP1 = 9;
+  unplacedP2 = 9;
+  millRemoval = false;
+  selectedIdx = null;
+  gameOver = false;
+  gameMode = document.getElementById('modeSelect').value;
+  userColor = document.getElementById('playerColorSelect').value;
+  updateUI();
+  draw();
+  checkAITurn();
+}
+
+function getPieceCount(player) {
+  return board.filter(p => p === player).length;
+}
+
+function isMill(nodeIdx, player) {
+  return mills.filter(m => m.includes(nodeIdx)).some(m => m.every(i => board[i] === player));
+}
+
+function updateUI(msg) {
+  document.getElementById('wUnplaced').innerText = unplacedP1;
+  document.getElementById('bUnplaced').innerText = unplacedP2;
+  document.getElementById('wBoard').innerText = getPieceCount('P1');
+  document.getElementById('bBoard').innerText = getPieceCount('P2');
+
+  const status = document.getElementById('statusText');
+  if (msg) { 
+    status.innerText = msg; 
+    return; 
+  }
+
+  let phaseStr = "";
+  if (unplacedP1 > 0 || unplacedP2 > 0) {
+    phaseStr = "Phase 1: Place Piece";
+  } else {
+    let pCount = getPieceCount(turn);
+    phaseStr = pCount === 3 ? "Phase 3: Flying" : "Phase 2: Move Piece";
+  }
+
+  if (millRemoval) {
+    phaseStr = "MILL FORMED! Click enemy piece to remove";
+  }
+
+  let turnStr = turn === 'P1' ? "White" : "Black";
+  let aiNotice = (gameMode === 'ai' && turn !== userColor) ? " (AI thinking...)" : "";
+  status.innerText = `${turnStr}'s Turn - ${phaseStr}${aiNotice}`;
+}
+
+// Full Canvas Render Engine
+function draw() {
+  // 1. Board Wood Background
+  ctx.fillStyle = '#edd1a0';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  // Decorative Outer Wood Border
+  ctx.strokeStyle = '#5c3a21';
+  ctx.lineWidth = 6;
+  ctx.strokeRect(10, 10, 420, 420);
+
+  // 2. Render Board Grid Lines
+  ctx.strokeStyle = '#2b1704';
+  ctx.lineWidth = 3;
+
+  // 3 Concentric Squares
+  ctx.strokeRect(40, 40, 360, 360);   // Outer
+  ctx.strokeRect(100, 100, 240, 240); // Middle
+  ctx.strokeRect(160, 160, 120, 120); // Inner
+
+  // 4 Crosslines connecting the squares
+  const lines = [
+    [220, 40, 220, 160],   // Top Cross
+    [220, 280, 220, 400],  // Bottom Cross
+    [40, 220, 160, 220],   // Left Cross
+    [280, 220, 400, 220]    // Right Cross
+  ];
+  lines.forEach(l => {
+    ctx.beginPath();
+    ctx.moveTo(l[0], l[1]);
+    ctx.lineTo(l[2], l[3]);
+    ctx.stroke();
+  });
+
+  // Calculate valid destination highlights if a piece is selected
+  let validDestinations = [];
+  if (selectedIdx !== null && !millRemoval) {
+    let isFlying = getPieceCount(turn) === 3 && unplacedP1 === 0 && unplacedP2 === 0;
+    if (isFlying) {
+      board.forEach((p, idx) => { if (p === null) validDestinations.push(idx); });
+    } else {
+      adj[selectedIdx].forEach(a => { if (board[a] === null) validDestinations.push(a); });
+    }
+  }
+
+  // Calculate valid enemy pieces that can be removed
+  let validRemovals = [];
+  if (millRemoval) {
+    let enemy = turn === 'P1' ? 'P2' : 'P1';
+    validRemovals = getValidRemovals(enemy);
+  }
+
+  // 3. Render Intersections & Pieces
+  nodes.forEach((n, idx) => {
+    // Base Intersection Dot
+    ctx.beginPath();
+    ctx.arc(n.x, n.y, 6, 0, Math.PI * 2);
+    ctx.fillStyle = '#3a200d';
+    ctx.fill();
+
+    // Highlight Valid Destinations
+    if (validDestinations.includes(idx)) {
+      ctx.beginPath();
+      ctx.arc(n.x, n.y, 11, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(46, 204, 113, 0.6)';
+      ctx.fill();
+      ctx.strokeStyle = '#27ae60';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    }
+
+    const p = board[idx];
+    if (p) {
+      // Piece Shadow for visual depth against wooden board
+      ctx.beginPath();
+      ctx.arc(n.x + 2, n.y + 2, 16, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(0,0,0,0.3)';
+      ctx.fill();
+
+      // Piece Base Circle
+      ctx.beginPath();
+      ctx.arc(n.x, n.y, 16, 0, Math.PI * 2);
+      
+      // Traditional White & Black Gradient Effects
+      let grad = ctx.createRadialGradient(n.x - 5, n.y - 5, 2, n.x, n.y, 16);
+      if (p === 'P1') {
+        // White Piece with soft highlights and off-white shading
+        grad.addColorStop(0, '#ffffff');
+        grad.addColorStop(0.7, '#f0f0f0');
+        grad.addColorStop(1, '#d0d0d0');
+      } else {
+        // Black Piece with crisp silver highlight and charcoal finish
+        grad.addColorStop(0, '#666666');
+        grad.addColorStop(0.5, '#222222');
+        grad.addColorStop(1, '#050505');
+      }
+      ctx.fillStyle = grad;
+      ctx.fill();
+
+      // Outer Outline Rim
+      ctx.strokeStyle = p === 'P1' ? '#555555' : '#aaaaaa';
+      ctx.lineWidth = p === 'P1' ? 1.5 : 1;
+      ctx.stroke();
+
+      // Selected Piece Highlight
+      if (selectedIdx === idx) {
+        ctx.beginPath();
+        ctx.arc(n.x, n.y, 18, 0, Math.PI * 2);
+        ctx.strokeStyle = '#f1c40f';
+        ctx.lineWidth = 3;
+        ctx.stroke();
+      }
+
+      // Mill Removal Targets Highlight
+      if (validRemovals.includes(idx)) {
+        ctx.beginPath();
+        ctx.arc(n.x, n.y, 18, 0, Math.PI * 2);
+        ctx.strokeStyle = '#e74c3c';
+        ctx.lineWidth = 3;
+        ctx.stroke();
+      }
+    }
+  });
+}
+
+function getValidRemovals(enemy) {
+  let allEnemyNodes = [];
+  board.forEach((p, i) => { if (p === enemy) allEnemyNodes.push(i); });
+  
+  // Prefer pieces not currently in a mill
+  let nonMillNodes = allEnemyNodes.filter(i => !isMill(i, enemy));
+  return nonMillNodes.length > 0 ? nonMillNodes : allEnemyNodes;
+}
+
+canvas.addEventListener('click', (e) => {
+  if (gameOver) return;
+  if (gameMode === 'ai' && turn !== userColor) return;
+
+  const rect = canvas.getBoundingClientRect();
+  const mx = e.clientX - rect.left;
+  const my = e.clientY - rect.top;
+
+  let clickedIdx = nodes.findIndex(n => Math.hypot(n.x - mx, n.y - my) < 22);
+  if (clickedIdx === -1) return;
+
+  handlePlayerAction(clickedIdx);
+});
+
+function handlePlayerAction(clickedIdx) {
+  // Handling Mill Removal Click
+  if (millRemoval) {
+    let enemy = turn === 'P1' ? 'P2' : 'P1';
+    let validRemovals = getValidRemovals(enemy);
+    if (validRemovals.includes(clickedIdx)) {
+      executeRemoval(clickedIdx);
+    }
+    return;
+  }
+
+  // Phase 1: Placement
+  if (unplacedP1 > 0 || unplacedP2 > 0) {
+    if (board[clickedIdx] === null) {
+      board[clickedIdx] = turn;
+      if (turn === 'P1') unplacedP1--; else unplacedP2--;
+      
+      if (isMill(clickedIdx, turn)) {
+        millRemoval = true;
+        playSound('mill');
+      } else {
+        playSound('place');
+        switchTurn();
+      }
+      draw();
+      updateUI();
+      checkAITurn();
+    }
+    return;
+  }
+
+  // Phase 2 & 3: Movement & Flying
+  if (selectedIdx === null) {
+    if (board[clickedIdx] === turn) {
+      selectedIdx = clickedIdx;
+      draw();
+    }
+  } else {
+    if (board[clickedIdx] === turn) {
+      selectedIdx = clickedIdx; // Re-select another friendly piece
+      draw();
+    } else if (board[clickedIdx] === null) {
+      let isFlying = getPieceCount(turn) === 3;
+      let isAdjacent = adj[selectedIdx].includes(clickedIdx);
+
+      if (isFlying || isAdjacent) {
+        board[selectedIdx] = null;
+        board[clickedIdx] = turn;
+        selectedIdx = null;
+
+        if (isMill(clickedIdx, turn)) {
+          millRemoval = true;
+          playSound('mill');
+        } else {
+          playSound('move');
+          switchTurn();
+        }
+        draw();
+        updateUI();
+        checkAITurn();
+      }
+    }
+  }
+}
+
+function executeRemoval(targetIdx) {
+  let enemy = turn === 'P1' ? 'P2' : 'P1';
+  board[targetIdx] = null;
+  millRemoval = false;
+  playSound('remove');
+
+  // Check Victory Condition after removal
+  if (unplacedP1 === 0 && unplacedP2 === 0) {
+    let enemyPieces = getPieceCount(enemy);
+    if (enemyPieces < 3) {
+      gameOver = true;
+      draw();
+      updateUI(`GAME OVER! ${turn === 'P1' ? 'WHITE' : 'BLACK'} WINS! Enemy reduced to under 3 pieces.`);
+      playSound('win');
+      return;
+    }
+  }
+
+  switchTurn();
+  draw();
+  updateUI();
+  checkAITurn();
+}
+
+function switchTurn() {
+  turn = turn === 'P1' ? 'P2' : 'P1';
+  
+  // Check if player has any valid moves left in Phase 2 or 3
+  if (unplacedP1 === 0 && unplacedP2 === 0) {
+    let currentPieces = getPieceCount(turn);
+    if (currentPieces > 3) {
+      let hasMove = false;
+      board.forEach((p, i) => {
+        if (p === turn) {
+          if (adj[i].some(a => board[a] === null)) hasMove = true;
+        }
+      });
+      if (!hasMove) {
+        gameOver = true;
+        let winner = turn === 'P1' ? 'BLACK' : 'WHITE';
+        updateUI(`GAME OVER! ${winner} WINS! ${turn === 'P1' ? 'White' : 'Black'} is trapped.`);
+        playSound('win');
+      }
+    }
+  }
+}
+
+// --- AI Opponent Logic ---
+function checkAITurn() {
+  if (gameOver || gameMode !== 'ai' || turn === userColor) return;
+
+  setTimeout(() => {
+    // AI Mill Removal
+    if (millRemoval) {
+      let enemy = userColor;
+      let validRemovals = getValidRemovals(enemy);
+      let target = validRemovals[Math.floor(Math.random() * validRemovals.length)];
+      executeRemoval(target);
+      return;
+    }
+
+    // Phase 1 AI Placement
+    if (unplacedP1 > 0 || unplacedP2 > 0) {
+      let emptyNodes = [];
+      board.forEach((p, i) => { if (p === null) emptyNodes.push(i); });
+      
+      let chosen = null;
+      // 1. Can AI complete a mill?
+      for (let node of emptyNodes) {
+        board[node] = turn;
+        if (isMill(node, turn)) { chosen = node; board[node] = null; break; }
+        board[node] = null;
+      }
+      // 2. Block opponent's incoming mill
+      if (chosen === null) {
+        let opponent = turn === 'P1' ? 'P2' : 'P1';
+        for (let node of emptyNodes) {
+          board[node] = opponent;
+          if (isMill(node, opponent)) { chosen = node; board[node] = null; break; }
+          board[node] = null;
+        }
+      }
+      // 3. Fallback to random placement
+      if (chosen === null) {
+        chosen = emptyNodes[Math.floor(Math.random() * emptyNodes.length)];
+      }
+
+      handlePlayerAction(chosen);
+      return;
+    }
+
+    // Phase 2/3 AI Movement
+    let aiPieces = [];
+    board.forEach((p, i) => { if (p === turn) aiPieces.push(i); });
+    let isFlying = getPieceCount(turn) === 3;
+
+    let possibleMoves = [];
+    aiPieces.forEach(from => {
+      let targets = isFlying ? board.map((p, i) => p === null ? i : null).filter(v => v !== null) : adj[from].filter(a => board[a] === null);
+      targets.forEach(to => possibleMoves.push({ from, to }));
+    });
+
+    if (possibleMoves.length > 0) {
+      // Prioritize moves that create a mill
+      let millMove = possibleMoves.find(m => {
+        board[m.from] = null;
+        board[m.to] = turn;
+        let makesMill = isMill(m.to, turn);
+        board[m.to] = null;
+        board[m.from] = turn;
+        return makesMill;
+      });
+
+      let move = millMove || possibleMoves[Math.floor(Math.random() * possibleMoves.length)];
+      selectedIdx = move.from;
+      handlePlayerAction(move.to);
+    }
+  }, 500);
+}
+
+// Event Listeners
+document.getElementById('restartBtn').addEventListener('click', initGame);
+document.getElementById('modeSelect').addEventListener('change', initGame);
+document.getElementById('playerColorSelect').addEventListener('change', initGame);
+
+// Initial start on window load
+window.onload = function() {
+  initGame();
+};
+</script>
+</body>
+</html>
