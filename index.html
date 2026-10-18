@@ -20,7 +20,7 @@
     background: #c0c0c0;
     border: 2px solid;
     border-color: #ffffff #808080 #808080 #ffffff;
-    width: 600px;
+    width: 650px;
     margin: 0 auto;
     padding: 2px;
     box-shadow: 4px 4px 10px rgba(0,0,0,0.5);
@@ -90,6 +90,11 @@
     font-size: 10px;
     color: #555;
   }
+  .btn-group {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+  }
   .launch-btn {
     font-family: "MS Sans Serif", Tahoma, sans-serif;
     font-size: 11px;
@@ -97,7 +102,7 @@
     background: #c0c0c0;
     border: 2px solid;
     border-color: #ffffff #808080 #808080 #ffffff;
-    padding: 3px 10px;
+    padding: 3px 8px;
     text-decoration: none;
     color: #000;
     cursor: pointer;
@@ -105,6 +110,10 @@
   }
   .launch-btn:active {
     border-color: #808080 #ffffff #ffffff #808080;
+  }
+  .mobile-btn {
+    background: #d4d0c8;
+    color: #000080;
   }
   .status-bar {
     border: 2px solid;
@@ -138,7 +147,10 @@
             <div class="game-title">Alquerque</div>
             <div class="game-sub">The 1283 AD predecessor to checkers</div>
           </div>
-          <a class="launch-btn" href="alquerque.html">Play</a>
+          <div class="btn-group">
+            <a class="launch-btn" href="alquerque.html">Play on Desktop</a>
+            <a class="launch-btn mobile-btn" href="mobile-alquerque.html">Play on Mobile</a>
+          </div>
         </div>
 
         <div class="game-item">
@@ -146,7 +158,10 @@
             <div class="game-title">Catch the Hare (Cercar la Liebre)</div>
             <div class="game-sub">Asymmetric hunt game from Libro de los Juegos</div>
           </div>
-          <a class="launch-btn" href="catch-the-hare.html">Play</a>
+          <div class="btn-group">
+            <a class="launch-btn" href="catch-the-hare.html">Play on Desktop</a>
+            <a class="launch-btn mobile-btn" href="mobile-catch-the-hare.html">Play on Mobile</a>
+          </div>
         </div>
 
         <div class="game-item">
@@ -154,7 +169,10 @@
             <div class="game-title">Ludus Latrunculorum</div>
             <div class="game-sub">Tactical Roman mercenaries war game</div>
           </div>
-          <a class="launch-btn" href="ludus-latrunculorum.html">Play</a>
+          <div class="btn-group">
+            <a class="launch-btn" href="ludus-latrunculorum.html">Play on Desktop</a>
+            <a class="launch-btn mobile-btn" href="mobile-ludus-latrunculorum.html">Play on Mobile</a>
+          </div>
         </div>
 
         <div class="game-item">
@@ -162,7 +180,10 @@
             <div class="game-title">Nine Men's Morris</div>
             <div class="game-sub">Classic strategic milling and flying game</div>
           </div>
-          <a class="launch-btn" href="nine-mens-morris.html">Play</a>
+          <div class="btn-group">
+            <a class="launch-btn" href="nine-mens-morris.html">Play on Desktop</a>
+            <a class="launch-btn mobile-btn" href="mobile-nine-mens-morris.html">Play on Mobile</a>
+          </div>
         </div>
 
         <div class="game-item">
@@ -170,7 +191,10 @@
             <div class="game-title">Rota</div>
             <div class="game-sub">Fast-paced Roman wheel alignment game</div>
           </div>
-          <a class="launch-btn" href="rota.html">Play</a>
+          <div class="btn-group">
+            <a class="launch-btn" href="rota.html">Play on Desktop</a>
+            <a class="launch-btn mobile-btn" href="mobile-rota.html">Play on Mobile</a>
+          </div>
         </div>
 
       </div>
