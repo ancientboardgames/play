@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rota (Roman Wheel Game)</title>
+<style>
+  * {
+    box-sizing: border-box;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+  body {
+    background-color: #008080;
+    font-family: "MS Sans Serif", Tahoma, Arial, sans-serif;
+    font-size: 11px;
+    margin: 8px;
+    color: #000;
+  }
+  .window {
+    background: #c0c0c0;
+    border: 2px solid;
+    border-color: #ffffff #808080 #808080 #ffffff;
+    max-width: 480px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 2px;
+    box-shadow: 3px 3px 6px rgba(0,0,0,0.4);
+  }
+  .title-bar {
+    background: linear-gradient(90deg, #000080, #1084d0);
+    padding: 3px 6px;
+    color: white;
+    font-weight: bold;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .title-bar-buttons {
+    display: flex;
+    gap: 2px;
+  }
+  .win-btn {
+    width: 16px;
+    height: 14px;
+    background: #c0c0c0;
+    border: 1px solid;
+    border-color: #ffffff #808080 #808080 #ffffff;
+    font-size: 9px;
+    line-height: 10px;
+    text-align: center;
+    font-weight: bold;
+    color: #000;
+  }
+  .content-area {
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .canvas-panel {
+    border: 2px solid;
+    border-color: #808080 #ffffff #ffffff #808080;
+    background: #fff;
+    padding: 2px;
+    display: flex;
+    justify-content: center;
+  }
+  canvas {
+    max-width: 100%;
+    height: auto;
+    touch-action: manipulation;
+  }
+  .control-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .group-box {
+    border: 2px solid;
+    border-color: #ffffff #808080 #808080 #ffffff;
+    padding: 6px;
+    background: #c0c0c0;
+  }
+  .group-box legend {
+    font-weight: bold;
+    color: #000080;
+    padding: 0 4px;
+  }
+  .field-row {
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  label {
+    font-weight: bold;
+  }
+  select, button {
+    font-family: "MS Sans Serif", Tahoma, sans-serif;
+    font-size: 11px;
+    background: #c0c0c0;
+    border: 2px solid;
+    border-color: #ffffff #808080 #808080 #ffffff;
+    padding: 4px 8px;
+    cursor: pointer;
+  }
+  button:active {
+    border-color: #808080 #ffffff #ffffff #808080;
+  }
+  .status-bar {
+    border: 2px solid;
+    border-color: #808080 #ffffff #ffffff #808080;
+    background: #c0c0c0;
+    padding: 4px;
+    font-weight: bold;
+    color: #000080;
+    min-height: 26px;
+    text-align: center;
+  }
+  .rules-text {
+    font-size: 10px;
+    line-height: 1.35;
+    height: 110px;
+    overflow-y: auto;
+    background: #fff;
+    border: 2px solid;
+    border-color: #808080 #ffffff #ffffff #808080;
+    padding: 6px;
+  }
+  .info-table {
+    width: 100%;
+    font-size: 11px;
+    border-collapse: collapse;
+  }
+  .info-table td {
+    padding: 2px 0;
+  }
+  .count-badge {
+    font-weight: bold;
+    color: #000;
+  }
+</style>
+</head>
+<body>
+
+<div class="window">
+  <div class="title-bar">
+    <span>Rota (Roman Wheel Game) c. 1st-4th c. AD</span>
+    <div class="title-bar-buttons">
+      <div class="win-btn">_</div>
+      <div class="win-btn">&#9633;</div>
+      <div class="win-btn">X</div>
+    </div>
+  </div>
+  
+  <div class="content-area">
+    <div class="canvas-panel">
+      <canvas id="gameCanvas" width="440" height="440"></canvas>
+    </div>
+
+    <div class="control-panel">
+      <fieldset class="group-box">
+        <legend>Game Setup</legend>
+        <div class="field-row">
+          <label for="modeSelect">Opponent:</label>
+          <select id="modeSelect">
+            <option value="ai">vs Computer (AI)</option>
+            <option value="human">vs Human (Local)</option>
+          </select>
+        </div>
+        <div class="field-row">
+          <label for="playerColorSelect">Play As:</label>
+          <select id="playerColorSelect">
+            <option value="white">White (First Move)</option>
+            <option value="black">Black (Second Move)</option>
+          </select>
+        </div>
+        <button id="restartBtn" style="width: 100%; margin-top: 4px;">Start New Game</button>
+      </fieldset>
+
+      <fieldset class="group-box">
+        <legend>Piece Inventory</legend>
+        <table class="info-table">
+          <tr>
+            <td><b>White Pieces:</b></td>
+            <td>Unplaced: <span id="wUnplaced" class="count-badge">3</span></td>
+            <td>On Board: <span id="wBoard" class="count-badge">0</span></td>
+          </tr>
+          <tr>
+            <td><b>Black Pieces:</b></td>
+            <td>Unplaced: <span id="bUnplaced" class="count-badge">3</span></td>
+            <td>On Board: <span id="bBoard" class="count-badge">0</span></td>
+          </tr>
+        </table>
+      </fieldset>
+
+      <fieldset class="group-box">
+        <legend>Official Rules</legend>
+        <div class="rules-text">
+          <b>Board:</b> A wheel with 8 outer nodes along the circumference and 1 center hub node.<br><br>
+          <b>Phase 1 (Placement):</b> Players alternate placing 3 pieces each on empty nodes. You cannot place directly into the center hub to form an immediate 3-in-a-row win on turn 1.<br><br>
+          <b>Phase 2 (Movement):</b> Players alternate sliding 1 piece along lines to an adjacent connected empty node (along spokes or round the rim).<br><br>
+          <b>Victory Condition:</b> Form a straight line of 3 pieces across the center (a diameter) or around 3 consecutive outer rim nodes.
+        </div>
+      </fieldset>
+
+      <div class="status-bar" id="statusText">Phase 1: Place White Piece</div>
+    </div>
+  </div>
+</div>
+
+<script>
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+function playSound(type) {
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
+  const now = audioCtx.currentTime;
+
+  if (type === 'place') {
+    osc.frequency.setValueAtTime(350, now);
+    osc.frequency.exponentialRampToValueAtTime(180, now + 0.07);
+    gain.gain.setValueAtTime(0.18, now);
+    gain.gain.linearRampToValueAtTime(0, now + 0.07);
+    osc.start(now); osc.stop(now + 0.07);
+  } else if (type === 'move') {
+    osc.frequency.setValueAtTime(280, now);
+    osc.frequency.exponentialRampToValueAtTime(140, now + 0.08);
+    gain.gain.setValueAtTime(0.15, now);
+    gain.gain.linearRampToValueAtTime(0, now + 0.08);
+    osc.start(now); osc.stop(now + 0.08);
+  } else if (type === 'win') {
+    osc.frequency.setValueAtTime(440, now);
+    osc.frequency.setValueAtTime(554.37, now + 0.12);
+    osc.frequency.setValueAtTime(659.25, now + 0.24);
+    osc.frequency.setValueAtTime(880, now + 0.36);
+    gain.gain.setValueAtTime(0.25, now);
+    gain.gain.linearRampToValueAtTime(0, now + 0.5);
+    osc.start(now); osc.stop(now + 0.5);
+  }
+}
+
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+const centerX = 220, centerY = 220, radius = 160;
+
+const nodes = [];
+for (let i = 0; i < 8; i++) {
+  const angle = (i * Math.PI / 4) - (Math.PI / 2);
+  nodes.push({
+    x: centerX + radius * Math.cos(angle),
+    y: centerY + radius * Math.sin(angle)
+  });
+}
+nodes.push({ x: centerX, y: centerY });
+
+const adj = [
+  [7, 1, 8], [0, 2, 8], [1, 3, 8], [2, 4, 8],
+  [3, 5, 8], [4, 6, 8], [5, 7, 8], [6, 0, 8],
+  [0, 1, 2, 3, 4, 5, 6, 7]
+];
+
+const winningLines = [
+  [0, 8, 4], [1, 8, 5], [2, 8, 6], [3, 8, 7],
+  [0, 1, 2], [1, 2, 3], [2, 3, 4], [3, 4, 5],
+  [4, 5, 6], [5, 6, 7], [6, 7, 0], [7, 0, 1]
+];
+
+let board = Array(9).fill(null);
+let turn = 'white';
+let unplacedWhite = 3, unplacedBlack = 3;
+let selectedIdx = null;
+let gameOver = false;
+let playerColor = 'white';
+let gameMode = 'ai';
+
+function initGame() {
+  board = Array(9).fill(null);
+  turn = 'white';
+  unplacedWhite = 3;
+  unplacedBlack = 3;
+  selectedIdx = null;
+  gameOver = false;
+  gameMode = document.getElementById('modeSelect').value;
+  playerColor = document.getElementById('playerColorSelect').value;
+
+  updateUI();
+  draw();
+  checkAITurn();
+}
+
+function checkWin(player) {
+  return winningLines.some(line => line.every(idx => board[idx] === player));
+}
+
+function updateUI(msg) {
+  document.getElementById('wUnplaced').innerText = unplacedWhite;
+  document.getElementById('bUnplaced').innerText = unplacedBlack;
+  document.getElementById('wBoard').innerText = board.filter(p => p === 'white').length;
+  document.getElementById('bBoard').innerText = board.filter(p => p === 'black').length;
+
+  const status = document.getElementById('statusText');
+  if (msg) { status.innerText = msg; return; }
+
+  let phaseStr = (unplacedWhite > 0 || unplacedBlack > 0) ? "Phase 1: Place Piece" : "Phase 2: Move Piece";
+  let turnStr = turn === 'white' ? "White" : "Black";
+  let aiNotice = (gameMode === 'ai' && turn !== playerColor) ? " (AI Thinking...)" : "";
+  status.innerText = `${turnStr}'s Turn - ${phaseStr}${aiNotice}`;
+}
+
+function draw() {
+  ctx.fillStyle = '#edd1a0';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  ctx.strokeStyle = '#3a200d';
+  ctx.lineWidth = 3;
+
+  ctx.beginPath();
+  ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+  ctx.stroke();
+
+  for (let i = 0; i < 4; i++) {
+    ctx.beginPath();
+    ctx.moveTo(nodes[i].x, nodes[i].y);
+    ctx.lineTo(nodes[i + 4].x, nodes[i + 4].y);
+    ctx.stroke();
+  }
+
+  nodes.forEach((n, idx) => {
+    ctx.beginPath();
+    ctx.arc(n.x, n.y, 6, 0, Math.PI * 2);
+    ctx.fillStyle = '#5c3a21';
+    ctx.fill();
+
+    const p = board[idx];
+    if (p) {
+      ctx.beginPath();
+      ctx.arc(n.x, n.y, 18, 0, Math.PI * 2);
+      ctx.fillStyle = p === 'white' ? '#ffffff' : '#000000';
+      ctx.fill();
+      ctx.strokeStyle = p === 'white' ? '#000000' : '#ffffff';
+      ctx.lineWidth = 2.5;
+      ctx.stroke();
+
+      if (selectedIdx === idx) {
+        ctx.strokeStyle = '#ffff00';
+        ctx.lineWidth = 4;
+        ctx.stroke();
+      }
+    }
+  });
+}
+
+function handleInput(clientX, clientY) {
+  if (gameOver) return;
+  if (gameMode === 'ai' && turn !== playerColor) return;
+
+  const rect = canvas.getBoundingClientRect();
+  const scaleX = canvas.width / rect.width;
+  const scaleY = canvas.height / rect.height;
+  const mx = (clientX - rect.left) * scaleX;
+  const my = (clientY - rect.top) * scaleY;
+
+  let clickedIdx = nodes.findIndex(n => Math.hypot(n.x - mx, n.y - my) < 28);
+  if (clickedIdx === -1) return;
+
+  handlePlayerAction(clickedIdx);
+}
+
+canvas.addEventListener('click', (e) => handleInput(e.clientX, e.clientY));
+canvas.addEventListener('touchend', (e) => {
+  e.preventDefault();
+  if (e.changedTouches.length > 0) {
+    handleInput(e.changedTouches[0].clientX, e.changedTouches[0].clientY);
+  }
+}, {passive: false});
+
+function handlePlayerAction(clickedIdx) {
+  if (unplacedWhite > 0 || unplacedBlack > 0) {
+    if (board[clickedIdx] === null) {
+      board[clickedIdx] = turn;
+      if (turn === 'white') unplacedWhite--; else unplacedBlack--;
+      
+      playSound('place');
+
+      if (checkWin(turn)) {
+        gameOver = true;
+        draw();
+        updateUI(`${turn.toUpperCase()} WINS! 3-in-a-row formed.`);
+        playSound('win');
+        return;
+      }
+
+      turn = turn === 'white' ? 'black' : 'white';
+      draw();
+      updateUI();
+      checkAITurn();
+    }
+    return;
+  }
+
+  if (selectedIdx === null) {
+    if (board[clickedIdx] === turn) {
+      selectedIdx = clickedIdx;
+      draw();
+    }
+  } else {
+    if (board[clickedIdx] === turn) {
+      selectedIdx = clickedIdx;
+      draw();
+    } else if (board[clickedIdx] === null) {
+      if (adj[selectedIdx].includes(clickedIdx)) {
+        board[selectedIdx] = null;
+        board[clickedIdx] = turn;
+        selectedIdx = null;
+
+        playSound('move');
+
+        if (checkWin(turn)) {
+          gameOver = true;
+          draw();
+          updateUI(`${turn.toUpperCase()} WINS! 3-in-a-row formed.`);
+          playSound('win');
+          return;
+        }
+
+        turn = turn === 'white' ? 'black' : 'white';
+        draw();
+        updateUI();
+        checkAITurn();
+      }
+    }
+  }
+}
+
+function checkAITurn() {
+  if (gameOver || gameMode !== 'ai' || turn === playerColor) return;
+
+  setTimeout(() => {
+    if (unplacedWhite > 0 || unplacedBlack > 0) {
+      let emptyNodes = [];
+      board.forEach((p, i) => { if (p === null) emptyNodes.push(i); });
+
+      let choice = null;
+      for (let n of emptyNodes) {
+        board[n] = turn;
+        if (checkWin(turn)) { choice = n; board[n] = null; break; }
+        board[n] = null;
+      }
+
+      if (choice === null) {
+        let opponent = turn === 'white' ? 'black' : 'white';
+        for (let n of emptyNodes) {
+          board[n] = opponent;
+          if (checkWin(opponent)) { choice = n; board[n] = null; break; }
+          board[n] = null;
+        }
+      }
+
+      if (choice === null) {
+        choice = emptyNodes[Math.floor(Math.random() * emptyNodes.length)];
+      }
+
+      handlePlayerAction(choice);
+      return;
+    }
+
+    let aiPieces = [];
+    board.forEach((p, i) => { if (p === turn) aiPieces.push(i); });
+
+    let possibleMoves = [];
+    aiPieces.forEach(from => {
+      adj[from].forEach(to => {
+        if (board[to] === null) possibleMoves.push({ from, to });
+      });
+    });
+
+    if (possibleMoves.length > 0) {
+      let winMove = possibleMoves.find(m => {
+        board[m.from] = null;
+        board[m.to] = turn;
+        let wins = checkWin(turn);
+        board[m.to] = null;
+        board[m.from] = turn;
+        return wins;
+      });
+
+      let choice = winMove || possibleMoves[Math.floor(Math.random() * possibleMoves.length)];
+      selectedIdx = choice.from;
+      handlePlayerAction(choice.to);
+    }
+  }, 450);
+}
+
+document.getElementById('restartBtn').addEventListener('click', initGame);
+document.getElementById('modeSelect').addEventListener('change', initGame);
+document.getElementById('playerColorSelect').addEventListener('change', initGame);
+
+initGame();
+</script>
+</body>
+</html>

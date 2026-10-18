@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nine Men's Morris - Mobile Edition</title>
+<style>
+  * {
+    box-sizing: border-box;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+  body {
+    background-color: #008080;
+    font-family: "MS Sans Serif", Tahoma, Arial, sans-serif;
+    font-size: 11px;
+    margin: 8px;
+    color: #000;
+  }
+  .window {
+    background: #c0c0c0;
+    border: 2px solid;
+    border-color: #ffffff #808080 #808080 #ffffff;
+    max-width: 480px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 2px;
+    box-shadow: 3px 3px 6px rgba(0,0,0,0.4);
+  }
+  .title-bar {
+    background: linear-gradient(90deg, #000080, #1084d0);
+    padding: 3px 6px;
+    color: white;
+    font-weight: bold;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .title-bar-buttons {
+    display: flex;
+    gap: 2px;
+  }
+  .win-btn {
+    width: 16px;
+    height: 14px;
+    background: #c0c0c0;
+    border: 1px solid;
+    border-color: #ffffff #808080 #808080 #ffffff;
+    font-size: 9px;
+    line-height: 10px;
+    text-align: center;
+    font-weight: bold;
+    color: #000;
+  }
+  .content-area {
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .canvas-panel {
+    border: 2px solid;
+    border-color: #808080 #ffffff #ffffff #808080;
+    background: #fff;
+    padding: 2px;
+    display: flex;
+    justify-content: center;
+  }
+  canvas {
+    max-width: 100%;
+    height: auto;
+    touch-action: manipulation;
+  }
+  .control-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .group-box {
+    border: 2px solid;
+    border-color: #ffffff #808080 #808080 #ffffff;
+    padding: 6px;
+    background: #c0c0c0;
+  }
+  .group-box legend {
+    font-weight: bold;
+    color: #000080;
+    padding: 0 4px;
+  }
+  .field-row {
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  label {
+    font-weight: bold;
+  }
+  select, button {
+    font-family: "MS Sans Serif", Tahoma, sans-serif;
+    font-size: 11px;
+    background: #c0c0c0;
+    border: 2px solid;
+    border-color: #ffffff #808080 #808080 #ffffff;
+    padding: 4px 8px;
+    cursor: pointer;
+  }
+  button:active {
+    border-color: #808080 #ffffff #ffffff #808080;
+  }
+  .status-bar {
+    border: 2px solid;
+    border-color: #808080 #ffffff #ffffff #808080;
+    background: #c0c0c0;
+    padding: 4px;
+    font-weight: bold;
+    color: #000080;
+    min-height: 26px;
+    text-align: center;
+  }
+  .rules-text {
+    font-size: 10px;
+    line-height: 1.35;
+    height: 110px;
+    overflow-y: auto;
+    background: #fff;
+    border: 2px solid;
+    border-color: #808080 #ffffff #ffffff #808080;
+    padding: 6px;
+  }
+  .info-table {
+    width: 100%;
+    font-size: 11px;
+    border-collapse: collapse;
+  }
+  .info-table td {
+    padding: 2px 0;
+  }
+  .count-badge {
+    font-weight: bold;
+    color: #000;
+  }
+</style>
+</head>
+<body>
+
+<div class="window">
+  <div class="title-bar">
+    <span>Nine Men's Morris - Mobile Edition</span>
+    <div class="title-bar-buttons">
+      <div class="win-btn">_</div>
+      <div class="win-btn">&#9633;</div>
+      <div class="win-btn">X</div>
+    </div>
+  </div>
+  
+  <div class="content-area">
+    <div class="canvas-panel">
+      <canvas id="gameCanvas" width="440" height="440"></canvas>
+    </div>
+
+    <div class="control-panel">
+      <fieldset class="group-box">
+        <legend>Game Setup</legend>
+        <div class="field-row">
+          <label for="modeSelect">Opponent:</label>
+          <select id="modeSelect">
+            <option value="ai">vs Computer (AI)</option>
+            <option value="human">vs Human (Local)</option>
+          </select>
+        </div>
+        <div class="field-row">
+          <label for="playerColorSelect">Play As:</label>
+          <select id="playerColorSelect">
+            <option value="white">White (First Move)</option>
+            <option value="black">Black (Second Move)</option>
+          </select>
+        </div>
+        <button id="restartBtn" style="width: 100%; margin-top: 4px;">Start New Game</button>
+      </fieldset>
+
+      <fieldset class="group-box">
+        <legend>Piece Inventory</legend>
+        <table class="info-table">
+          <tr>
+            <td><b>White Pieces:</b></td>
+            <td>Hand: <span id="wHand" class="count-badge">9</span></td>
+            <td>Board: <span id="wBoard" class="count-badge">0</span></td>
+          </tr>
+          <tr>
+            <td><b>Black Pieces:</b></td>
+            <td>Hand: <span id="bHand" class="count-badge">9</span></td>
+            <td>Board: <span id="bBoard" class="count-badge">0</span></td>
+          </tr>
+        </table>
+      </fieldset>
+
+      <fieldset class="group-box">
+        <legend>Official Rules (Libro de los Juegos)</legend>
+        <div class="rules-text">
+          <b>Phase 1 (Placement):</b> Players take turns placing 9 pieces on any empty intersection point.<br><br>
+          <b>Phase 2 (Movement):</b> Players slide pieces along lines to adjacent connected points.<br><br>
+          <b>Phase 3 (Flying):</b> When a player is reduced to exactly 3 pieces, their pieces gain the ability to "fly" to any empty point on the board.<br><br>
+          <b>Mill & Capture:</b> Aligning 3 pieces in a row forms a "mill", allowing you to remove any opponent piece not part of a mill. Victory goes to reducing an opponent below 3 pieces or blocking all moves.
+        </div>
+      </fieldset>
+
+      <div class="status-bar" id="statusText">Phase 1: Place White Piece</div>
+    </div>
+  </div>
+</div>
+
+<script>
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+function playSound(type) {
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
+  const now = audioCtx.currentTime;
+
+  if (type === 'place') {
+    osc.frequency.setValueAtTime(350, now);
+    osc.frequency.exponentialRampToValueAtTime(180, now + 0.07);
+    gain.gain.setValueAtTime(0.18, now);
+    gain.gain.linearRampToValueAtTime(0, now + 0.07);
+    osc.start(now); osc.stop(now + 0.07);
+  } else if (type === 'move') {
+    osc.frequency.setValueAtTime(280, now);
+    osc.frequency.exponentialRampToValueAtTime(140, now + 0.08);
+    gain.gain.setValueAtTime(0.15, now);
+    gain.gain.linearRampToValueAtTime(0, now + 0.08);
+    osc.start(now); osc.stop(now + 0.08);
+  } else if (type === 'remove') {
+    osc.frequency.setValueAtTime(500, now);
+    osc.frequency.exponentialRampToValueAtTime(100, now + 0.15);
+    gain.gain.setValueAtTime(0.22, now);
+    gain.gain.linearRampToValueAtTime(0, now + 0.15);
+    osc.start(now); osc.stop(now + 0.15);
+  } else if (type === 'win') {
+    osc.frequency.setValueAtTime(440, now);
+    osc.frequency.setValueAtTime(554.37, now + 0.12);
+    osc.frequency.setValueAtTime(659.25, now + 0.24);
+    gain.gain.setValueAtTime(0.25, now);
+    gain.gain.linearRampToValueAtTime(0, now + 0.35);
+    osc.start(now); osc.stop(now + 0.35);
+  }
+}
+
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+const margin = 50;
+const size = 340;
+
+const points = [
+  {x: margin, y: margin, ring: 0, pos: 0},
+  {x: margin + size/2, y: margin, ring: 0, pos: 1},
+  {x: margin + size, y: margin, ring: 0, pos: 2},
+  {x: margin + size, y: margin + size/2, ring: 0, pos: 3},
+  {x: margin + size, y: margin + size, ring: 0, pos: 4},
+  {x: margin + size/2, y: margin + size, ring: 0, pos: 5},
+  {x: margin, y: margin + size, ring: 0, pos: 6},
+  {x: margin, y: margin + size/2, ring: 0, pos: 7},
+
+  {x: margin + 56, y: margin + 56, ring: 1, pos: 0},
+  {x: margin + size/2, y: margin + 56, ring: 1, pos: 1},
+  {x: margin + size - 56, y: margin + 56, ring: 1, pos: 2},
+  {x: margin + size - 56, y: margin + size/2, ring: 1, pos: 3},
+  {x: margin + size - 56, y: margin + size - 56, ring: 1, pos: 4},
+  {x: margin + size/2, y: margin + size - 56, ring: 1, pos: 5},
+  {x: margin + 56, y: margin + size - 56, ring: 1, pos: 6},
+  {x: margin + 56, y: margin + size/2, ring: 1, pos: 7},
+
+  {x: margin + 113, y: margin + 113, ring: 2, pos: 0},
+  {x: margin + size/2, y: margin + 113, ring: 2, pos: 1},
+  {x: margin + size - 113, y: margin + 113, ring: 2, pos: 2},
+  {x: margin + size - 113, y: margin + size/2, ring: 2, pos: 3},
+  {x: margin + size - 113, y: margin + size - 113, ring: 2, pos: 4},
+  {x: margin + size/2, y: margin + size - 113, ring: 2, pos: 5},
+  {x: margin + 113, y: margin + size - 113, ring: 2, pos: 6},
+  {x: margin + 113, y: margin + size/2, ring: 2, pos: 7},
+];
+
+const adj = [];
+for (let i = 0; i < 24; i++) adj.push([]);
+
+for (let r = 0; r < 3; r++) {
+  let base = r * 8;
+  for (let p = 0; p < 8; p++) {
+    let next = base + ((p + 1) % 8);
+    let prev = base + ((p + 7) % 8);
+    adj[base + p].push(next, prev);
+  }
+}
+
+for (let p = 1; p < 8; p += 2) {
+  adj[p].push(p + 8);
+  adj[p + 8].push(p, p + 16);
+  adj[p + 16].push(p + 8);
+}
+
+const mills = [
+  [0,1,2], [2,3,4], [4,5,6], [6,7,0],
+  [8,9,10], [10,11,12], [12,13,14], [14,15,8],
+  [16,17,18], [18,19,20], [20,21,22], [22,23,16],
+  [1,9,17], [3,11,19], [5,13,21], [7,15,23]
+];
+
+let board = Array(24).fill(null);
+let turn = 'white';
+let phase = 'place';
+let handWhite = 9, handBlack = 9;
+let selectedIdx = null;
+let removingPiece = false;
+let gameOver = false;
+let playerColor = 'white';
+let gameMode = 'ai';
+
+function initGame() {
+  board = Array(24).fill(null);
+  turn = 'white';
+  phase = 'place';
+  handWhite = 9;
+  handBlack = 9;
+  selectedIdx = null;
+  removingPiece = false;
+  gameOver = false;
+  gameMode = document.getElementById('modeSelect').value;
+  playerColor = document.getElementById('playerColorSelect').value;
+
+  updateUI();
+  draw();
+  checkAITurn();
+}
+
+function updateUI(msg) {
+  document.getElementById('wHand').innerText = handWhite;
+  document.getElementById('bHand').innerText = handBlack;
+  document.getElementById('wBoard').innerText = board.filter(p => p === 'white').length;
+  document.getElementById('bBoard').innerText = board.filter(p => p === 'black').length;
+
+  const status = document.getElementById('statusText');
+  if (msg) { status.innerText = msg; return; }
+
+  let turnStr = turn === 'white' ? 'White' : 'Black';
+  let phaseStr = phase === 'place' ? 'Phase 1: Place' : (phase === 'move' ? 'Phase 2: Move' : 'Phase 3: Flying');
+  let removeStr = removingPiece ? ' - REMOVE OPPONENT PIECE!' : '';
+  let aiNotice = (gameMode === 'ai' && turn !== playerColor) ? ' (AI Thinking...)' : '';
+  status.innerText = `${turnStr}'s Turn - ${phaseStr}${removeStr}${aiNotice}`;
+}
+
+function draw() {
+  ctx.fillStyle = '#edd1a0';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  ctx.strokeStyle = '#3a200d';
+  ctx.lineWidth = 3;
+
+  for (let i = 0; i < 3; i++) {
+    let inset = i * 56;
+    ctx.strokeRect(margin + inset, margin + inset, size - (inset * 2), size - (inset * 2));
+  }
+
+  ctx.beginPath();
+  ctx.moveTo(points[1].x, points[1].y); ctx.lineTo(points[17].x, points[17].y);
+  ctx.moveTo(points[3].x, points[3].y); ctx.lineTo(points[19].x, points[19].y);
+  ctx.moveTo(points[5].x, points[5].y); ctx.lineTo(points[21].x, points[21].y);
+  ctx.moveTo(points[7].x, points[7].y); ctx.lineTo(points[23].x, points[23].y);
+  ctx.stroke();
+
+  points.forEach((pt, idx) => {
+    ctx.beginPath();
+    ctx.arc(pt.x, pt.y, 6, 0, Math.PI * 2);
+    ctx.fillStyle = '#5c3a21';
+    ctx.fill();
+
+    const p = board[idx];
+    if (p) {
+      ctx.beginPath();
+      ctx.arc(pt.x, pt.y, 18, 0, Math.PI * 2);
+      ctx.fillStyle = p === 'white' ? '#ffffff' : '#000000';
+      ctx.fill();
+      ctx.strokeStyle = p === 'white' ? '#000000' : '#ffffff';
+      ctx.lineWidth = 2.5;
+      ctx.stroke();
+
+      if (selectedIdx === idx) {
+        ctx.strokeStyle = '#ffff00';
+        ctx.lineWidth = 4;
+        ctx.stroke();
+      }
+    }
+  });
+}
+
+function checkMill(idx, player) {
+  return mills.some(mill => mill.includes(idx) && mill.every(i => board[i] === player));
+}
+
+function isPartOfMill(idx, player) {
+  return mills.some(mill => mill.includes(idx) && mill.every(i => board[i] === player));
+}
+
+function hasNonMillPieces(player) {
+  let pieces = [];
+  board.forEach((p, i) => { if (p === player) pieces.push(i); });
+  let nonMills = pieces.filter(i => !isPartOfMill(i, player));
+  return nonMills.length > 0 ? nonMills : pieces;
+}
+
+function handleInput(clientX, clientY) {
+  if (gameOver) return;
+  if (gameMode === 'ai' && turn !== playerColor) return;
+
+  const rect = canvas.getBoundingClientRect();
+  const scaleX = canvas.width / rect.width;
+  const scaleY = canvas.height / rect.height;
+  const mx = (clientX - rect.left) * scaleX;
+  const my = (clientY - rect.top) * scaleY;
+
+  let clickedIdx = points.findIndex(pt => Math.hypot(pt.x - mx, pt.y - my) < 28);
+  if (clickedIdx === -1) return;
+
+  handlePlayerAction(clickedIdx);
+}
+
+canvas.addEventListener('click', (e) => handleInput(e.clientX, e.clientY));
+canvas.addEventListener('touchend', (e) => {
+  e.preventDefault();
+  if (e.changedTouches.length > 0) {
+    handleInput(e.changedTouches[0].clientX, e.changedTouches[0].clientY);
+  }
+}, {passive: false});
+
+function handlePlayerAction(clickedIdx) {
+  const enemy = turn === 'white' ? 'black' : 'white';
+
+  if (removingPiece) {
+    if (board[clickedIdx] === enemy) {
+      let validRemovals = hasNonMillPieces(enemy);
+      if (validRemovals.includes(clickedIdx)) {
+        board[clickedIdx] = null;
+        playSound('remove');
+        removingPiece = false;
+        selectedIdx = null;
+
+        let enemyCount = board.filter(p => p === enemy).length;
+        let enemyHand = turn === 'white' ? handBlack : handWhite;
+
+        if (phase !== 'place' && enemyCount < 3 && enemyHand === 0) {
+          gameOver = true;
+          draw();
+          updateUI(`${turn.toUpperCase()} WINS! Opponent reduced below 3 pieces.`);
+          playSound('win');
+          return;
+        }
+
+        turn = enemy;
+        updatePhase();
+        updateUI();
+        checkAITurn();
+      }
+    }
+    return;
+  }
+
+  if (phase === 'place') {
+    if (board[clickedIdx] === null) {
+      board[clickedIdx] = turn;
+      if (turn === 'white') handWhite--; else handBlack--;
+      playSound('place');
+
+      if (checkMill(clickedIdx, turn)) {
+        removingPiece = true;
+        draw();
+        updateUI();
+        if (gameMode === 'ai' && turn !== playerColor) {
+          setTimeout(aiRemovePiece, 450);
+        }
+        return;
+      }
+
+      turn = enemy;
+      updatePhase();
+      updateUI();
+      checkAITurn();
+    }
+  } else {
+    if (selectedIdx === null) {
+      if (board[clickedIdx] === turn) {
+        selectedIdx = clickedIdx;
+        draw();
+      }
+    } else {
+      if (board[clickedIdx] === turn) {
+        selectedIdx = clickedIdx;
+        draw();
+      } else if (board[clickedIdx] === null) {
+        let isFlying = board.filter(p => p === turn).length === 3;
+        if (isFlying || adj[selectedIdx].includes(clickedIdx)) {
+          board[selectedIdx] = null;
+          board[clickedIdx] = turn;
+          let oldSelected = selectedIdx;
+          selectedIdx = null;
+          playSound('move');
+
+          if (checkMill(clickedIdx, turn)) {
+            removingPiece = true;
+            draw();
+            updateUI();
+            if (gameMode === 'ai' && turn !== playerColor) {
+              setTimeout(aiRemovePiece, 450);
+            }
+            return;
+          }
+
+          turn = enemy;
+          updatePhase();
+          updateUI();
+          checkAITurn();
+        }
+      }
+    }
+  }
+}
+
+function updatePhase() {
+  if (handWhite === 0 && handBlack === 0) {
+    let wCount = board.filter(p => p === 'white').length;
+    let bCount = board.filter(p => p === 'black').length;
+    if (wCount === 3 || bCount === 3) phase = 'fly';
+    else phase = 'move';
+  }
+}
+
+function aiRemovePiece() {
+  if (!removingPiece) return;
+  const enemy = turn === 'white' ? 'black' : 'white';
+  let validRemovals = hasNonMillPieces(enemy);
+  let target = validRemovals[Math.floor(Math.random() * validRemovals.length)];
+  handlePlayerAction(target);
+}
+
+function checkAITurn() {
+  if (gameOver || gameMode !== 'ai' || turn === playerColor) return;
+
+  setTimeout(() => {
+    const enemy = turn === 'white' ? 'black' : 'white';
+
+    if (phase === 'place') {
+      let emptyIdxs = [];
+      board.forEach((p, i) => { if (p === null) emptyIdxs.push(i); });
+      let choice = emptyIdxs[Math.floor(Math.random() * emptyIdxs.length)];
+      handlePlayerAction(choice);
+    } else {
+      let myPieces = [];
+      board.forEach((p, i) => { if (p === turn) myPieces.push(i); });
+      let isFlying = myPieces.length === 3;
+
+      let possibleMoves = [];
+      myPieces.forEach(from => {
+        let targets = isFlying ? board.map((p, i) => i).filter(i => board[i] === null) : adj[from].filter(i => board[i] === null);
+        targets.forEach(to => possibleMoves.push({ from, to }));
+      });
+
+      if (possibleMoves.length > 0) {
+        let choice = possibleMoves[Math.floor(Math.random() * possibleMoves.length)];
+        selectedIdx = choice.from;
+        handlePlayerAction(choice.to);
+      }
+    }
+  }, 450);
+}
+
+document.getElementById('restartBtn').addEventListener('click', initGame);
+document.getElementById('modeSelect').addEventListener('change', initGame);
+document.getElementById('playerColorSelect').addEventListener('change', initGame);
+
+initGame();
+</script>
+</body>
+</html>

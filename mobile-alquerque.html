@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Alquerque - Mobile Edition</title>
+<style>
+  * {
+    box-sizing: border-box;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+  body {
+    background-color: #008080;
+    font-family: "MS Sans Serif", Tahoma, Arial, sans-serif;
+    font-size: 11px;
+    margin: 8px;
+    color: #000;
+  }
+  .window {
+    background: #c0c0c0;
+    border: 2px solid;
+    border-color: #ffffff #808080 #808080 #ffffff;
+    max-width: 480px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 2px;
+    box-shadow: 3px 3px 6px rgba(0,0,0,0.4);
+  }
+  .title-bar {
+    background: linear-gradient(90deg, #000080, #1084d0);
+    padding: 3px 6px;
+    color: white;
+    font-weight: bold;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .title-bar-buttons {
+    display: flex;
+    gap: 2px;
+  }
+  .win-btn {
+    width: 16px;
+    height: 14px;
+    background: #c0c0c0;
+    border: 1px solid;
+    border-color: #ffffff #808080 #808080 #ffffff;
+    font-size: 9px;
+    line-height: 10px;
+    text-align: center;
+    font-weight: bold;
+    color: #000;
+  }
+  .content-area {
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .canvas-panel {
+    border: 2px solid;
+    border-color: #808080 #ffffff #ffffff #808080;
+    background: #fff;
+    padding: 2px;
+    display: flex;
+    justify-content: center;
+  }
+  canvas {
+    max-width: 100%;
+    height: auto;
+    touch-action: manipulation;
+  }
+  .control-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .group-box {
+    border: 2px solid;
+    border-color: #ffffff #808080 #808080 #ffffff;
+    padding: 6px;
+    background: #c0c0c0;
+  }
+  .group-box legend {
+    font-weight: bold;
+    color: #000080;
+    padding: 0 4px;
+  }
+  .field-row {
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  label {
+    font-weight: bold;
+  }
+  select, button {
+    font-family: "MS Sans Serif", Tahoma, sans-serif;
+    font-size: 11px;
+    background: #c0c0c0;
+    border: 2px solid;
+    border-color: #ffffff #808080 #808080 #ffffff;
+    padding: 4px 8px;
+    cursor: pointer;
+  }
+  button:active {
+    border-color: #808080 #ffffff #ffffff #808080;
+  }
+  .status-bar {
+    border: 2px solid;
+    border-color: #808080 #ffffff #ffffff #808080;
+    background: #c0c0c0;
+    padding: 4px;
+    font-weight: bold;
+    color: #000080;
+    min-height: 26px;
+    text-align: center;
+  }
+  .rules-text {
+    font-size: 10px;
+    line-height: 1.35;
+    height: 110px;
+    overflow-y: auto;
+    background: #fff;
+    border: 2px solid;
+    border-color: #808080 #ffffff #ffffff #808080;
+    padding: 6px;
+  }
+  .info-table {
+    width: 100%;
+    font-size: 11px;
+    border-collapse: collapse;
+  }
+  .info-table td {
+    padding: 2px 0;
+  }
+  .count-badge {
+    font-weight: bold;
+    color: #000;
+  }
+</style>
+</head>
+<body>
+
+<div class="window">
+  <div class="title-bar">
+    <span>Alquerque - 1283 AD</span>
+    <div class="title-bar-buttons">
+      <div class="win-btn">_</div>
+      <div class="win-btn">&#9633;</div>
+      <div class="win-btn">X</div>
+    </div>
+  </div>
+  
+  <div class="content-area">
+    <div class="canvas-panel">
+      <canvas id="gameCanvas" width="440" height="440"></canvas>
+    </div>
+
+    <div class="control-panel">
+      <fieldset class="group-box">
+        <legend>Game Setup</legend>
+        <div class="field-row">
+          <label for="modeSelect">Opponent:</label>
+          <select id="modeSelect">
+            <option value="ai">vs Computer (AI)</option>
+            <option value="human">vs Human (Local)</option>
+          </select>
+        </div>
+        <div class="field-row">
+          <label for="playerColorSelect">Play As:</label>
+          <select id="playerColorSelect">
+            <option value="white">White (First Move)</option>
+            <option value="black">Black (Second Move)</option>
+          </select>
+        </div>
+        <button id="restartBtn" style="width: 100%; margin-top: 4px;">Start New Game</button>
+      </fieldset>
+
+      <fieldset class="group-box">
+        <legend>Piece Count</legend>
+        <table class="info-table">
+          <tr>
+            <td><b>White Pieces:</b></td>
+            <td>Remaining: <span id="wCount" class="count-badge">12</span></td>
+          </tr>
+          <tr>
+            <td><b>Black Pieces:</b></td>
+            <td>Remaining: <span id="bCount" class="count-badge">12</span></td>
+          </tr>
+        </table>
+      </fieldset>
+
+      <fieldset class="group-box">
+        <legend>Official Rules (Libro de los Juegos)</legend>
+        <div class="rules-text">
+          <b>Setup:</b> Played on a 5x5 matrix with corner-to-corner diagonals and an inner diamond. White occupies top 10 nodes + left 2 on middle row. Black occupies bottom 10 nodes + right 2 on middle row. Center node starts empty.<br><br>
+          <b>Movement:</b> Slide 1 piece per turn to an adjacent connected empty node.<br><br>
+          <b>Captures:</b> Jump over an adjacent enemy piece along a connected line onto an empty space beyond. Captured piece is removed.<br><br>
+          <b>Mandatory Jumps & Multi-Jumps:</b> Capturing is mandatory! If a jump exists, you must take it. If a piece lands with another valid jump available, it must continue jumping.<br><br>
+          <b>Victory Condition:</b> Capture all enemy pieces or block opponent from having legal moves.
+        </div>
+      </fieldset>
+
+      <div class="status-bar" id="statusText">Turn: White</div>
+    </div>
+  </div>
+</div>
+
+<script>
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+function playSound(type) {
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
+  const now = audioCtx.currentTime;
+
+  if (type === 'move') {
+    osc.frequency.setValueAtTime(300, now);
+    osc.frequency.exponentialRampToValueAtTime(150, now + 0.08);
+    gain.gain.setValueAtTime(0.15, now);
+    gain.gain.linearRampToValueAtTime(0, now + 0.08);
+    osc.start(now); osc.stop(now + 0.08);
+  } else if (type === 'capture') {
+    osc.frequency.setValueAtTime(600, now);
+    osc.frequency.exponentialRampToValueAtTime(120, now + 0.15);
+    gain.gain.setValueAtTime(0.25, now);
+    gain.gain.linearRampToValueAtTime(0, now + 0.15);
+    osc.start(now); osc.stop(now + 0.15);
+  } else if (type === 'win') {
+    osc.frequency.setValueAtTime(440, now);
+    osc.frequency.setValueAtTime(554.37, now + 0.12);
+    osc.frequency.setValueAtTime(659.25, now + 0.24);
+    gain.gain.setValueAtTime(0.25, now);
+    gain.gain.linearRampToValueAtTime(0, now + 0.35);
+    osc.start(now); osc.stop(now + 0.35);
+  }
+}
+
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+const margin = 50;
+const step = 85;
+
+const gridPoints = [];
+for (let r = 0; r < 5; r++) {
+  for (let c = 0; c < 5; c++) {
+    gridPoints.push({ x: c, y: r, px: margin + c * step, py: margin + r * step });
+  }
+}
+
+function getNeighbors(x, y) {
+  const neighbors = [];
+  const add = (nx, ny) => {
+    if (nx >= 0 && nx < 5 && ny >= 0 && ny < 5) {
+      neighbors.push({ x: nx, y: ny, dx: nx - x, dy: ny - y });
+    }
+  };
+
+  add(x + 1, y); add(x - 1, y);
+  add(x, y + 1); add(x, y - 1);
+  if (x === y) { add(x + 1, y + 1); add(x - 1, y - 1); }
+  if (x + y === 4) { add(x + 1, y - 1); add(x - 1, y + 1); }
+  if ((x === 2 && y === 0) || (x === 4 && y === 2)) { add(3, 1); add(x === 2 ? 1 : 3, y === 0 ? 1 : 3); }
+  if ((x === 2 && y === 4) || (x === 0 && y === 2)) { add(1, 3); add(x === 2 ? 3 : 1, y === 4 ? 3 : 1); }
+  if (x === 1 && y === 1) { add(2, 0); add(0, 2); }
+  if (x === 3 && y === 1) { add(2, 0); add(4, 2); }
+  if (x === 1 && y === 3) { add(0, 2); add(2, 4); }
+  if (x === 3 && y === 3) { add(4, 2); add(2, 4); }
+
+  const unique = [];
+  neighbors.forEach(n => {
+    if (!unique.some(u => u.x === n.x && u.y === n.y)) unique.push(n);
+  });
+  return unique;
+}
+
+let board = Array(25).fill(null);
+let turn = 'white';
+let playerColor = 'white';
+let gameMode = 'ai';
+let selectedIdx = null;
+let activeMultiJumpIdx = null;
+let gameOver = false;
+
+function initGame() {
+  board = Array(25).fill(null);
+  for (let i = 0; i < 12; i++) board[i] = 'white';
+  board[12] = null;
+  for (let i = 13; i < 25; i++) board[i] = 'black';
+
+  turn = 'white';
+  gameOver = false;
+  selectedIdx = null;
+  activeMultiJumpIdx = null;
+  playerColor = document.getElementById('playerColorSelect').value;
+  gameMode = document.getElementById('modeSelect').value;
+
+  updateUI();
+  draw();
+  checkAITurn();
+}
+
+function updateUI(msg) {
+  const wCount = board.filter(p => p === 'white').length;
+  const bCount = board.filter(p => p === 'black').length;
+  document.getElementById('wCount').innerText = wCount;
+  document.getElementById('bCount').innerText = bCount;
+
+  const status = document.getElementById('statusText');
+  if (msg) { status.innerText = msg; return; }
+
+  let turnStr = turn === 'white' ? 'White' : 'Black';
+  let aiNotice = (gameMode === 'ai' && turn !== playerColor) ? " (Computer Thinking...)" : "";
+  let mandatoryStr = hasMandatoryCapture(turn) ? " - MANDATORY CAPTURE REQUIRED!" : "";
+  status.innerText = `Turn: ${turnStr}${mandatoryStr}${aiNotice}`;
+}
+
+function draw() {
+  ctx.fillStyle = '#edd1a0';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  ctx.strokeStyle = '#3a200d';
+  ctx.lineWidth = 2;
+
+  for (let i = 0; i < 5; i++) {
+    ctx.beginPath();
+    ctx.moveTo(margin, margin + i * step);
+    ctx.lineTo(margin + 4 * step, margin + i * step);
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(margin + i * step, margin);
+    ctx.lineTo(margin + i * step, margin + 4 * step);
+    ctx.stroke();
+  }
+
+  ctx.beginPath();
+  ctx.moveTo(margin, margin);
+  ctx.lineTo(margin + 4 * step, margin + 4 * step);
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.moveTo(margin + 4 * step, margin);
+  ctx.lineTo(margin, margin + 4 * step);
+  ctx.stroke();
+
+  const midTop = { x: margin + 2 * step, y: margin };
+  const midRight = { x: margin + 4 * step, y: margin + 2 * step };
+  const midBottom = { x: margin + 2 * step, y: margin + 4 * step };
+  const midLeft = { x: margin, y: margin + 2 * step };
+
+  ctx.beginPath();
+  ctx.moveTo(midTop.x, midTop.y);
+  ctx.lineTo(midRight.x, midRight.y);
+  ctx.lineTo(midBottom.x, midBottom.y);
+  ctx.lineTo(midLeft.x, midLeft.y);
+  ctx.closePath();
+  ctx.stroke();
+
+  gridPoints.forEach((pt, idx) => {
+    ctx.beginPath();
+    ctx.arc(pt.px, pt.py, 5, 0, Math.PI * 2);
+    ctx.fillStyle = '#5c3a21';
+    ctx.fill();
+
+    const val = board[idx];
+    if (val) {
+      ctx.beginPath();
+      ctx.arc(pt.px, pt.py, 18, 0, Math.PI * 2);
+      ctx.fillStyle = val === 'white' ? '#ffffff' : '#000000';
+      ctx.fill();
+      ctx.strokeStyle = val === 'white' ? '#000000' : '#ffffff';
+      ctx.lineWidth = 2.5;
+      ctx.stroke();
+
+      if (selectedIdx === idx) {
+        ctx.strokeStyle = '#ffff00';
+        ctx.lineWidth = 4;
+        ctx.stroke();
+      }
+    }
+  });
+}
+
+function getPieceCaptures(fromIdx) {
+  const p = board[fromIdx];
+  if (!p) return [];
+  const enemy = p === 'white' ? 'black' : 'white';
+  const pt = gridPoints[fromIdx];
+  const adjs = getNeighbors(pt.x, pt.y);
+  const captures = [];
+
+  for (let a of adjs) {
+    let midIdx = a.y * 5 + a.x;
+    if (board[midIdx] === enemy) {
+      let jx = a.x + a.dx, jy = a.y + a.dy;
+      if (jx >= 0 && jx < 5 && jy >= 0 && jy < 5) {
+        let jumpIdx = jy * 5 + jx;
+        if (board[jumpIdx] === null) {
+          captures.push({ from: fromIdx, to: jumpIdx, capture: midIdx });
+        }
+      }
+    }
+  }
+  return captures;
+}
+
+function getPieceSimpleMoves(fromIdx) {
+  const p = board[fromIdx];
+  if (!p) return [];
+  const pt = gridPoints[fromIdx];
+  const adjs = getNeighbors(pt.x, pt.y);
+  const moves = [];
+
+  for (let a of adjs) {
+    let targetIdx = a.y * 5 + a.x;
+    if (board[targetIdx] === null) {
+      moves.push({ from: fromIdx, to: targetIdx, capture: null });
+    }
+  }
+  return moves;
+}
+
+function getAllCaptures(player) {
+  let captures = [];
+  board.forEach((p, idx) => {
+    if (p === player) {
+      captures = captures.concat(getPieceCaptures(idx));
+    }
+  });
+  return captures;
+}
+
+function getAllSimpleMoves(player) {
+  let moves = [];
+  board.forEach((p, idx) => {
+    if (p === player) {
+      moves = moves.concat(getPieceSimpleMoves(idx));
+    }
+  });
+  return moves;
+}
+
+function hasMandatoryCapture(player) {
+  return getAllCaptures(player).length > 0;
+}
+
+function handleInput(clientX, clientY) {
+  if (gameOver) return;
+  if (gameMode === 'ai' && turn !== playerColor) return;
+
+  const rect = canvas.getBoundingClientRect();
+  const scaleX = canvas.width / rect.width;
+  const scaleY = canvas.height / rect.height;
+  const mx = (clientX - rect.left) * scaleX;
+  const my = (clientY - rect.top) * scaleY;
+
+  let clickedIdx = -1;
+  gridPoints.forEach((pt, idx) => {
+    if (Math.hypot(pt.px - mx, pt.py - my) < 28) {
+      clickedIdx = idx;
+    }
+  });
+
+  if (clickedIdx === -1) return;
+
+  if (activeMultiJumpIdx !== null) {
+    if (clickedIdx === activeMultiJumpIdx) return;
+    const availCaptures = getPieceCaptures(activeMultiJumpIdx);
+    const chosen = availCaptures.find(c => c.to === clickedIdx);
+    if (chosen) {
+      makeMove(chosen.from, chosen.to, chosen.capture);
+    }
+    return;
+  }
+
+  const mandatory = hasMandatoryCapture(turn);
+
+  if (selectedIdx === null) {
+    if (board[clickedIdx] === turn) {
+      if (mandatory) {
+        if (getPieceCaptures(clickedIdx).length > 0) {
+          selectedIdx = clickedIdx;
+          draw();
+        }
+      } else {
+        if (getPieceSimpleMoves(clickedIdx).length > 0) {
+          selectedIdx = clickedIdx;
+          draw();
+        }
+      }
+    }
+  } else {
+    if (board[clickedIdx] === turn) {
+      if (mandatory) {
+        if (getPieceCaptures(clickedIdx).length > 0) {
+          selectedIdx = clickedIdx;
+          draw();
+        }
+      } else {
+        selectedIdx = clickedIdx;
+        draw();
+      }
+    } else {
+      if (mandatory) {
+        const availCaptures = getPieceCaptures(selectedIdx);
+        const chosen = availCaptures.find(c => c.to === clickedIdx);
+        if (chosen) {
+          makeMove(chosen.from, chosen.to, chosen.capture);
+        }
+      } else {
+        const availMoves = getPieceSimpleMoves(selectedIdx);
+        const chosen = availMoves.find(m => m.to === clickedIdx);
+        if (chosen) {
+          makeMove(chosen.from, chosen.to, null);
+        }
+      }
+    }
+  }
+}
+
+canvas.addEventListener('click', (e) => handleInput(e.clientX, e.clientY));
+canvas.addEventListener('touchend', (e) => {
+  e.preventDefault();
+  if (e.changedTouches.length > 0) {
+    handleInput(e.changedTouches[0].clientX, e.changedTouches[0].clientY);
+  }
+}, {passive: false});
+
+function makeMove(fromIdx, toIdx, captureIdx = null) {
+  const p = board[fromIdx];
+  board[fromIdx] = null;
+  board[toIdx] = p;
+
+  if (captureIdx !== null) {
+    board[captureIdx] = null;
+    playSound('capture');
+
+    const furtherCaptures = getPieceCaptures(toIdx);
+    if (furtherCaptures.length > 0) {
+      activeMultiJumpIdx = toIdx;
+      selectedIdx = toIdx;
+      draw();
+      updateUI(`${p === 'white' ? 'White' : 'Black'} MUST continue multi-jump!`);
+      if (gameMode === 'ai' && turn !== playerColor) {
+        checkAITurn();
+      }
+      return;
+    }
+  } else {
+    playSound('move');
+  }
+
+  activeMultiJumpIdx = null;
+  selectedIdx = null;
+  draw();
+
+  const enemy = turn === 'white' ? 'black' : 'white';
+  const enemyPieces = board.filter(cell => cell === enemy).length;
+
+  if (enemyPieces === 0) {
+    gameOver = true;
+    updateUI(`${turn.toUpperCase()} WINS! All enemy pieces captured.`);
+    playSound('win');
+    return;
+  }
+
+  turn = enemy;
+
+  const enemyHasCaptures = hasMandatoryCapture(turn);
+  const enemyHasSimple = getAllSimpleMoves(turn).length > 0;
+
+  if (!enemyHasCaptures && !enemyHasSimple) {
+    gameOver = true;
+    const winner = turn === 'white' ? 'BLACK' : 'WHITE';
+    updateUI(`${winner} WINS! ${turn === 'white' ? 'White' : 'Black'} has no legal moves.`);
+    playSound('win');
+    return;
+  }
+
+  updateUI();
+  checkAITurn();
+}
+
+function checkAITurn() {
+  if (gameOver || gameMode !== 'ai' || turn === playerColor) return;
+
+  setTimeout(() => {
+    if (activeMultiJumpIdx !== null) {
+      const captures = getPieceCaptures(activeMultiJumpIdx);
+      const choice = captures[Math.floor(Math.random() * captures.length)];
+      makeMove(choice.from, choice.to, choice.capture);
+      return;
+    }
+
+    const captures = getAllCaptures(turn);
+    if (captures.length > 0) {
+      const choice = captures[Math.floor(Math.random() * captures.length)];
+      makeMove(choice.from, choice.to, choice.capture);
+    } else {
+      const simpleMoves = getAllSimpleMoves(turn);
+      if (simpleMoves.length > 0) {
+        const choice = simpleMoves[Math.floor(Math.random() * simpleMoves.length)];
+        makeMove(choice.from, choice.to, null);
+      }
+    }
+  }, 450);
+}
+
+document.getElementById('restartBtn').addEventListener('click', initGame);
+document.getElementById('playerColorSelect').addEventListener('change', initGame);
+document.getElementById('modeSelect').addEventListener('change', initGame);
+
+initGame();
+</script>
+</body>
+</html>
