@@ -61,15 +61,18 @@
   .canvas-panel {
     border: 2px solid;
     border-color: #808080 #ffffff #ffffff #808080;
-    background: #fff;
+    background: #edd1a0;
     padding: 2px;
     display: flex;
     justify-content: center;
   }
   canvas {
-    max-width: 100%;
+    display: block;
+    width: 100%;
+    max-width: 440px;
     height: auto;
-    touch-action: manipulation;
+    aspect-ratio: 1 / 1;
+    touch-action: none;
   }
   .control-panel {
     display: flex;
@@ -146,7 +149,7 @@
 
 <div class="window">
   <div class="title-bar">
-    <span>Nine Men's Morris - Mobile Edition</span>
+    <span>Nine Men's Morris - Smart AI Edition</span>
     <div class="title-bar-buttons">
       <div class="win-btn">_</div>
       <div class="win-btn">&#9633;</div>
@@ -165,7 +168,7 @@
         <div class="field-row">
           <label for="modeSelect">Opponent:</label>
           <select id="modeSelect">
-            <option value="ai">vs Computer (AI)</option>
+            <option value="ai">vs Smart AI</option>
             <option value="human">vs Human (Local)</option>
           </select>
         </div>
@@ -196,12 +199,10 @@
       </fieldset>
 
       <fieldset class="group-box">
-        <legend>Official Rules (Libro de los Juegos)</legend>
+        <legend>Official Rules</legend>
         <div class="rules-text">
-          <b>Phase 1 (Placement):</b> Players take turns placing 9 pieces on any empty intersection point.<br><br>
-          <b>Phase 2 (Movement):</b> Players slide pieces along lines to adjacent connected points.<br><br>
-          <b>Phase 3 (Flying):</b> When a player is reduced to exactly 3 pieces, their pieces gain the ability to "fly" to any empty point on the board.<br><br>
-          <b>Mill & Capture:</b> Aligning 3 pieces in a row forms a "mill", allowing you to remove any opponent piece not part of a mill. Victory goes to reducing an opponent below 3 pieces or blocking all moves.
+          <b>Mill & Capture:</b> Aligning 3 pieces in a row forms a mill. When you form a mill, targetable enemy pieces will glow <b>red</b>—tap one to capture it!<br><br>
+          <b>Phases:</b> Place 9 pieces, slide along connected lines, and fly when reduced to 3 pieces.
         </div>
       </fieldset>
 
@@ -345,8 +346,8 @@ function updateUI(msg) {
 
   let turnStr = turn === 'white' ? 'White' : 'Black';
   let phaseStr = phase === 'place' ? 'Phase 1: Place' : (phase === 'move' ? 'Phase 2: Move' : 'Phase 3: Flying');
-  let removeStr = removingPiece ? ' - REMOVE OPPONENT PIECE!' : '';
-  let aiNotice = (gameMode === 'ai' && turn !== playerColor) ? ' (AI Thinking...)' : '';
+  let removeStr = removingPiece ? ' - SELECT RED ENEMY PIECE TO CAPTURE!' : '';
+  let aiNotice = (gameMode === 'ai' && turn !== playerColor) ? ' (Smart AI Thinking...)' : '';
   status.innerText = `${turnStr}'s Turn - ${phaseStr}${removeStr}${aiNotice}`;
 }
 
@@ -369,6 +370,12 @@ function draw() {
   ctx.moveTo(points[7].x, points[7].y); ctx.lineTo(points[23].x, points[23].y);
   ctx.stroke();
 
+  const enemy = turn === 'white' ? 'black' : 'white';
+  let validRemovals = [];
+  if (removingPiece) {
+    validRemovals = hasNonMillPieces(enemy);
+  }
+
   points.forEach((pt, idx) => {
     ctx.beginPath();
     ctx.arc(pt.x, pt.y, 6, 0, Math.PI * 2);
@@ -376,16 +383,29 @@ function draw() {
     ctx.fill();
 
     const p = board[idx];
-    if (p) {
+    if (p !== null) {
       ctx.beginPath();
       ctx.arc(pt.x, pt.y, 18, 0, Math.PI * 2);
-      ctx.fillStyle = p === 'white' ? '#ffffff' : '#000000';
+      ctx.fillStyle = (p === 'white') ? '#ffffff' : '#111111';
       ctx.fill();
-      ctx.strokeStyle = p === 'white' ? '#000000' : '#ffffff';
+
+      ctx.beginPath();
+      ctx.arc(pt.x, pt.y, 18, 0, Math.PI * 2);
+      ctx.strokeStyle = (p === 'white') ? '#000000' : '#ffffff';
       ctx.lineWidth = 2.5;
       ctx.stroke();
 
+      if (removingPiece && p === enemy && validRemovals.includes(idx)) {
+        ctx.beginPath();
+        ctx.arc(pt.x, pt.y, 23, 0, Math.PI * 2);
+        ctx.strokeStyle = '#ff0000';
+        ctx.lineWidth = 5;
+        ctx.stroke();
+      }
+
       if (selectedIdx === idx) {
+        ctx.beginPath();
+        ctx.arc(pt.x, pt.y, 22, 0, Math.PI * 2);
         ctx.strokeStyle = '#ffff00';
         ctx.lineWidth = 4;
         ctx.stroke();
@@ -409,29 +429,26 @@ function hasNonMillPieces(player) {
   return nonMills.length > 0 ? nonMills : pieces;
 }
 
-function handleInput(clientX, clientY) {
+function handlePointer(e) {
   if (gameOver) return;
   if (gameMode === 'ai' && turn !== playerColor) return;
 
   const rect = canvas.getBoundingClientRect();
   const scaleX = canvas.width / rect.width;
   const scaleY = canvas.height / rect.height;
-  const mx = (clientX - rect.left) * scaleX;
-  const my = (clientY - rect.top) * scaleY;
+  const mx = (e.clientX - rect.left) * scaleX;
+  const my = (e.clientY - rect.top) * scaleY;
 
-  let clickedIdx = points.findIndex(pt => Math.hypot(pt.x - mx, pt.y - my) < 28);
+  let clickedIdx = points.findIndex(pt => Math.hypot(pt.x - mx, pt.y - my) < 32);
   if (clickedIdx === -1) return;
 
   handlePlayerAction(clickedIdx);
 }
 
-canvas.addEventListener('click', (e) => handleInput(e.clientX, e.clientY));
-canvas.addEventListener('touchend', (e) => {
+canvas.addEventListener('pointerdown', (e) => {
   e.preventDefault();
-  if (e.changedTouches.length > 0) {
-    handleInput(e.changedTouches[0].clientX, e.changedTouches[0].clientY);
-  }
-}, {passive: false});
+  handlePointer(e);
+});
 
 function handlePlayerAction(clickedIdx) {
   const enemy = turn === 'white' ? 'black' : 'white';
@@ -444,6 +461,7 @@ function handlePlayerAction(clickedIdx) {
         playSound('remove');
         removingPiece = false;
         selectedIdx = null;
+        draw();
 
         let enemyCount = board.filter(p => p === enemy).length;
         let enemyHand = turn === 'white' ? handBlack : handWhite;
@@ -470,13 +488,14 @@ function handlePlayerAction(clickedIdx) {
       board[clickedIdx] = turn;
       if (turn === 'white') handWhite--; else handBlack--;
       playSound('place');
+      draw();
 
       if (checkMill(clickedIdx, turn)) {
         removingPiece = true;
         draw();
         updateUI();
         if (gameMode === 'ai' && turn !== playerColor) {
-          setTimeout(aiRemovePiece, 450);
+          setTimeout(aiTurnAction, 500);
         }
         return;
       }
@@ -501,16 +520,16 @@ function handlePlayerAction(clickedIdx) {
         if (isFlying || adj[selectedIdx].includes(clickedIdx)) {
           board[selectedIdx] = null;
           board[clickedIdx] = turn;
-          let oldSelected = selectedIdx;
           selectedIdx = null;
           playSound('move');
+          draw();
 
           if (checkMill(clickedIdx, turn)) {
             removingPiece = true;
             draw();
             updateUI();
             if (gameMode === 'ai' && turn !== playerColor) {
-              setTimeout(aiRemovePiece, 450);
+              setTimeout(aiTurnAction, 500);
             }
             return;
           }
@@ -534,43 +553,86 @@ function updatePhase() {
   }
 }
 
-function aiRemovePiece() {
-  if (!removingPiece) return;
-  const enemy = turn === 'white' ? 'black' : 'white';
-  let validRemovals = hasNonMillPieces(enemy);
-  let target = validRemovals[Math.floor(Math.random() * validRemovals.length)];
-  handlePlayerAction(target);
+function aiTurnAction() {
+  if (gameOver) return;
+  const aiColor = turn;
+  const enemyColor = aiColor === 'white' ? 'black' : 'white';
+
+  if (removingPiece) {
+    let validRemovals = hasNonMillPieces(enemyColor);
+    let target = validRemovals[Math.floor(Math.random() * validRemovals.length)];
+    handlePlayerAction(target);
+    return;
+  }
+
+  if (phase === 'place') {
+    let emptyIdxs = [];
+    board.forEach((p, i) => { if (p === null) emptyIdxs.push(i); });
+    if (emptyIdxs.length === 0) return;
+
+    let bestMove = null;
+
+    // 1. Try to complete a mill for AI
+    for (let idx of emptyIdxs) {
+      board[idx] = aiColor;
+      if (checkMill(idx, aiColor)) {
+        bestMove = idx;
+        board[idx] = null;
+        break;
+      }
+      board[idx] = null;
+    }
+
+    // 2. Block immediate enemy mill
+    if (bestMove === null) {
+      for (let idx of emptyIdxs) {
+        board[idx] = enemyColor;
+        if (checkMill(idx, enemyColor)) {
+          bestMove = idx;
+          board[idx] = null;
+          break;
+        }
+        board[idx] = null;
+      }
+    }
+
+    // 3. Otherwise pick random empty spot
+    if (bestMove === null) {
+      bestMove = emptyIdxs[Math.floor(Math.random() * emptyIdxs.length)];
+    }
+
+    handlePlayerAction(bestMove);
+  } else {
+    let myPieces = [];
+    board.forEach((p, i) => { if (p === aiColor) myPieces.push(i); });
+    let isFlying = myPieces.length === 3;
+
+    let possibleMoves = [];
+    myPieces.forEach(from => {
+      let targets = isFlying ? board.map((p, i) => i).filter(i => board[i] === null) : adj[from].filter(i => board[i] === null);
+      targets.forEach(to => possibleMoves.push({ from, to }));
+    });
+
+    if (possibleMoves.length > 0) {
+      let winningMove = possibleMoves.find(m => {
+        board[m.from] = null;
+        board[m.to] = aiColor;
+        let wins = checkMill(m.to, aiColor);
+        board[m.to] = null;
+        board[m.from] = aiColor;
+        return wins;
+      });
+
+      let choice = winningMove || possibleMoves[Math.floor(Math.random() * possibleMoves.length)];
+      selectedIdx = choice.from;
+      handlePlayerAction(choice.to);
+    }
+  }
 }
 
 function checkAITurn() {
   if (gameOver || gameMode !== 'ai' || turn === playerColor) return;
-
-  setTimeout(() => {
-    const enemy = turn === 'white' ? 'black' : 'white';
-
-    if (phase === 'place') {
-      let emptyIdxs = [];
-      board.forEach((p, i) => { if (p === null) emptyIdxs.push(i); });
-      let choice = emptyIdxs[Math.floor(Math.random() * emptyIdxs.length)];
-      handlePlayerAction(choice);
-    } else {
-      let myPieces = [];
-      board.forEach((p, i) => { if (p === turn) myPieces.push(i); });
-      let isFlying = myPieces.length === 3;
-
-      let possibleMoves = [];
-      myPieces.forEach(from => {
-        let targets = isFlying ? board.map((p, i) => i).filter(i => board[i] === null) : adj[from].filter(i => board[i] === null);
-        targets.forEach(to => possibleMoves.push({ from, to }));
-      });
-
-      if (possibleMoves.length > 0) {
-        let choice = possibleMoves[Math.floor(Math.random() * possibleMoves.length)];
-        selectedIdx = choice.from;
-        handlePlayerAction(choice.to);
-      }
-    }
-  }, 450);
+  setTimeout(aiTurnAction, 450);
 }
 
 document.getElementById('restartBtn').addEventListener('click', initGame);
